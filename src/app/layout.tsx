@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(montserrat.className, "animated-gradient-bg")}>
+      <body className={cn(montserrat.className)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
