@@ -1,3 +1,4 @@
+
 'use client';
 import {
   doc,
@@ -17,12 +18,21 @@ export interface Faculty extends DocumentData {
   role: 'faculty' | 'admin';
 }
 
+export interface Slot extends DocumentData {
+  id: string;
+  slotDatetime: string;
+  durationMinutes: number;
+  courseId: string;
+  isBooked: boolean;
+  bookedBy?: string;
+}
+
 export async function getFacultyProfile(db: Firestore, userId: string): Promise<Faculty | null> {
     const facultyRef = doc(db, 'faculties', userId);
     const facultySnap = await getDoc(facultyRef);
 
     if (facultySnap.exists()) {
-        return facultySnap.data() as Faculty;
+        return { id: facultySnap.id, ...facultySnap.data() } as Faculty;
     } else {
         // Return null instead of logging an error, as this is an expected case for new users.
         return null;
@@ -31,13 +41,14 @@ export async function getFacultyProfile(db: Firestore, userId: string): Promise<
 
 export async function createFacultyProfile(db: Firestore, userId: string, data: Omit<Faculty, 'userId'>) {
     const facultyRef = doc(db, 'faculties', userId);
-    // The user document may not exist yet, so we don't need to check with getDoc first.
-    // setDoc with { merge: true } will create it if it's missing, or update it if it exists.
-    // For this flow, we only expect to be creating.
-    await setDoc(facultyRef, {
-        ...data,
-        userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-    });
+    const facultySnap = await getDoc(facultyRef);
+
+    if (!facultySnap.exists()) {
+      await setDoc(facultyRef, {
+          ...data,
+          userId,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+      });
+    }
 }

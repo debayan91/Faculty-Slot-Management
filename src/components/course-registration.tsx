@@ -1,22 +1,39 @@
+
 "use client";
 
 import { useState } from "react";
-import { MOCK_COURSES, MOCK_SLOTS } from "@/lib/mock-data";
+import { MOCK_COURSES } from "@/lib/mock-data";
 import type { Course, Slot } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
-import { useUser } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import Link from "next/link";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { collection } from "firebase/firestore";
+import { bookSlot } from "@/firebase/firestore/slots";
 import { CardDescription, CardTitle } from "./ui/card";
+
+function formatSlotTime(date: Date) {
+  const day = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  return `${day} @ ${time}`;
+}
+
+function getDisplayTime(date: Date) {
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
 
 export default function CourseRegistration() {
   const { user, faculty, loading: userLoading } = useUser();
+  const firestore = useFirestore();
+
+  const [slotsData, slotsLoading, slotsError] = useCollection(collection(firestore, "slots"));
+
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [currentView, setCurrentView] = useState("courseSelection");
   const [isLoading, setIsLoading] = useState(false);
-  const [slotsData, setSlotsData] = useState(MOCK_SLOTS);
 
   const resetApp = () => {
     setSelectedCourse(null);
@@ -25,20 +42,22 @@ export default function CourseRegistration() {
     setCurrentView("courseSelection");
   };
 
-  if (userLoading) {
-     return (
+  const loading = userLoading || slotsLoading;
+
+  if (loading) {
+    return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!user) {
+  if (!user || !faculty) {
     return (
-        <div className="text-center">
-            <h1 className="main-heading">Welcome to the Faculty Portal</h1>
-            <p className="sub-heading">Please <Link href="/login" className="underline text-primary">log in</Link> to register for courses.</p>
-        </div>
+      <div className="text-center">
+        <h1 className="main-heading">Welcome to the Faculty Portal</h1>
+        <p className="sub-heading">Please <Link href="/login" className="underline text-primary">log in</Link> to register for courses.</p>
+      </div>
     )
   }
 
@@ -55,41 +74,52 @@ export default function CourseRegistration() {
     setCurrentView("slotSelection");
   };
 
-  const handleSlotSelect = (slot: Slot) => {
+  const handleSlotSelect = async (slot: Slot) => {
+    const formattedTime = formatSlotTime(new Date(slot.slotDatetime));
     const isConfirmed = confirm(
-      `Confirm booking for ${selectedCourse?.name} at ${slot.time}?`
+      `Confirm booking for ${selectedCourse?.name} at ${formattedTime}?`
     );
     if (isConfirmed) {
       setIsLoading(true);
-      setTimeout(() => {
-        // Simulate booking
-        const updatedSlots = { ...slotsData };
-        const courseSlots = updatedSlots[selectedCourse!.id];
-        const slotIndex = courseSlots.findIndex((s) => s.id === slot.id);
-        if (slotIndex > -1) {
-          updatedSlots[selectedCourse!.id][slotIndex].isBooked = true;
-        }
-        setSlotsData(updatedSlots);
-        setSelectedSlot(slot);
+      try {
+        await bookSlot(firestore, slot.id, faculty.empId);
+        // We need to shape the selected slot to have the right data for confirmation screen
+        const confirmedSlot = { ...slot, time: formattedTime };
+        setSelectedSlot(confirmedSlot as any); // hack for now for demonstration
         setCurrentView("confirmation");
+      } catch (error: any) {
+        console.error("Failed to book slot:", error);
+        alert(`Error booking slot: ${error.message}`);
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     }
   };
   
+  const allSlots: Slot[] = slotsData ? slotsData.docs.map(doc => ({ id: doc.id, ...doc.data() } as Slot)) : [];
+  
   const getAvailableDays = () => {
     if (!selectedCourse) return [];
-    const slots = slotsData[selectedCourse.id] || [];
-    const availableDays = slots
-      .filter((slot) => !slot.isBooked)
-      .map((slot) => slot.time.split(",")[0])
-      .filter((day, index, self) => self.indexOf(day) === index);
+    
+    const courseSlots = allSlots.filter(slot => slot.courseId === selectedCourse.id && !slot.isBooked);
+    const availableDays = [...new Set(courseSlots.map(slot => new Date(slot.slotDatetime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })))];
+    
     return availableDays;
   };
+  
+  const getSlotsForDay = () => {
+    if (!selectedCourse || !selectedDay) return [];
+    
+    return allSlots.filter(slot => {
+        const slotDate = new Date(slot.slotDatetime);
+        const slotDayString = slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        return slot.courseId === selectedCourse.id && slotDayString === selectedDay;
+    });
+  }
 
   return (
     <div className="card-container w-full max-w-2xl mx-auto">
-      {isLoading && (
+      {(isLoading || loading) && (
         <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-50 rounded-lg">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
@@ -144,7 +174,7 @@ export default function CourseRegistration() {
             <h2 className="section-heading">Select a Time Slot</h2>
             <p className="mb-6 text-light">3. Available slots for <span className="font-medium-theme text-normal">{selectedCourse.name}</span> on <span className="font-medium-theme text-normal">{selectedDay}</span>.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {slotsData[selectedCourse.id].filter(slot => slot.time.startsWith(selectedDay!)).map(slot => (
+                {getSlotsForDay().map(slot => (
                     <Button 
                         key={slot.id} 
                         className="slot-button"
@@ -152,7 +182,7 @@ export default function CourseRegistration() {
                         disabled={slot.isBooked}
                         onClick={() => handleSlotSelect(slot)}
                     >
-                        {slot.time.split('@')[1].trim()}
+                        {getDisplayTime(new Date(slot.slotDatetime))}
                     </Button>
                 ))}
             </div>
@@ -168,7 +198,7 @@ export default function CourseRegistration() {
           <h2 className="section-heading !text-center">Registration Confirmed!</h2>
           <p className="sub-heading !text-center !mb-1">Thank you, <span className="font-medium-theme text-normal">{faculty?.name}</span>.</p>
           <p className="mb-4 text-light">
-            Your slot for <span className="font-medium-theme text-normal">{selectedCourse?.name}</span> on <span className="font-medium-theme text-normal">{selectedSlot.time}</span> is booked.
+            Your slot for <span className="font-medium-theme text-normal">{selectedCourse?.name}</span> on <span className="font-medium-theme text-normal">{(selectedSlot as any).time}</span> is booked.
           </p>
           <p className="text-sm mb-6 text-light">A confirmation email has been *simulated* to <span className="font-medium-theme text-light">{user?.email}</span>.</p>
 

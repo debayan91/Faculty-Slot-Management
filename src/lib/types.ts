@@ -1,5 +1,5 @@
 import { type User as FirebaseUser } from "firebase/auth";
-import type { Faculty as FacultyDoc } from "@/firebase/firestore/users";
+import type { Faculty as FacultyDoc, Slot as SlotDoc } from "@/firebase/firestore/users";
 
 // We can extend the base user with our own faculty profile data
 export interface User extends FirebaseUser, Partial<FacultyDoc> {}
@@ -10,8 +10,7 @@ export interface Course {
   description: string;
 }
 
-export interface Slot {
-  id: string;
-  time: string;
-  isBooked: boolean;
+// Update Slot type to match Firestore schema
+export interface Slot extends SlotDoc {
+  id: string; // The document ID from Firestore
 }
