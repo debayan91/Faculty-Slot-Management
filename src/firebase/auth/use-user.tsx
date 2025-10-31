@@ -4,7 +4,7 @@ import type { User } from 'firebase/auth';
 import { onIdTokenChanged } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 
-import { useAuth } from '@/firebase/auth';
+import { useAuth } from '@/firebase';
 import { type Faculty, getFacultyProfile } from '@/firebase/firestore/users';
 
 export type UserState = {
