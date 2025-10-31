@@ -4,9 +4,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow read/write access to a user's own faculty document
+    // Allow a user to read and create their own faculty document.
+    // Update and delete are disallowed for now to prevent users from changing their role.
     match /faculties/{userId} {
-      allow read, create: if request.auth.uid == userId;
+      allow get, create: if request.auth.uid == userId;
     }
 
     // Slots can be read by any authenticated user.

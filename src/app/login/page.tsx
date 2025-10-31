@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { createFacultyProfile } from "@/firebase/firestore/users";
+import { createFacultyProfile, getFacultyProfile } from "@/firebase/firestore/users";
 
 export default function LoginPage() {
   const auth = useAuth();
@@ -57,14 +57,17 @@ export default function LoginPage() {
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      
+
       // Check if user profile already exists, if not create one
-      await createFacultyProfile(firestore, user.uid, {
-        empId: user.uid.slice(0, 8), // simplified empId
-        name: user.displayName || 'Google User',
-        email: user.email!,
-        role: 'faculty',
-      });
+      const existingProfile = await getFacultyProfile(firestore, user.uid);
+      if (!existingProfile) {
+        await createFacultyProfile(firestore, user.uid, {
+            empId: user.uid.slice(0, 8), // simplified empId
+            name: user.displayName || 'Google User',
+            email: user.email!,
+            role: 'faculty',
+        });
+      }
       
       toast({ title: "Signed in with Google" });
       router.push("/");
