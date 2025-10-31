@@ -7,22 +7,18 @@ import {
   type DocumentData,
   type Firestore,
 } from 'firebase/firestore';
-import { useFirestore } from '..';
+import { useFirestore } from '@/firebase';
 
 export interface Faculty extends DocumentData {
   empId: string;
-  userId: string;
+  userId?: string; // Is on the document, but not required for creation
   name: string;
   email: string;
   department?: string;
   role: 'faculty' | 'admin';
 }
 
-export async function getFacultyProfile(userId: string): Promise<Faculty | null> {
-    const db = useFirestore();
-    if (!db) {
-        throw new Error('Firestore is not initialized');
-    }
+export async function getFacultyProfile(db: Firestore, userId: string): Promise<Faculty | null> {
     const facultyRef = doc(db, 'faculties', userId);
     const facultySnap = await getDoc(facultyRef);
 
@@ -33,15 +29,16 @@ export async function getFacultyProfile(userId: string): Promise<Faculty | null>
     }
 }
 
-export async function createFacultyProfile(userId: string, data: Omit<Faculty, 'userId' | 'updatedAt'>) {
-    const db = useFirestore();
-    if (!db) {
-        throw new Error('Firestore is not initialized');
-    }
+export async function createFacultyProfile(db: Firestore, userId: string, data: Omit<Faculty, 'userId'>) {
     const facultyRef = doc(db, 'faculties', userId);
-    await setDoc(facultyRef, {
-        ...data,
-        userId,
-        updatedAt: serverTimestamp(),
-    }, { merge: true });
+    const facultySnap = await getDoc(facultyRef);
+
+    if (!facultySnap.exists()) {
+        await setDoc(facultyRef, {
+            ...data,
+            userId,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        }, { merge: true });
+    }
 }

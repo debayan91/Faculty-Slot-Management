@@ -1,9 +1,56 @@
-import Link from 'next/link';
-import { ThemeToggle } from './theme-toggle';
-import { Button } from './ui/button';
-import { BookOpenCheck } from 'lucide-react';
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "firebase/auth";
+import { useAuth, useUser } from "@/firebase";
+import { ThemeToggle } from "./theme-toggle";
+import { Button } from "./ui/button";
+import {
+  BookOpenCheck,
+  LogOut,
+  User as UserIcon,
+  LogIn,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 
 export function Header() {
+  const auth = useAuth();
+  const { user, faculty } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      toast({ title: "Signed Out", description: "You have been successfully signed out." });
+      router.push("/login");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Sign Out Failed",
+        description: error.message,
+      });
+    }
+  };
+
+  const getInitials = (name: string) => {
+    const names = name.split(" ");
+    if (names.length > 1) {
+      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-24 max-w-screen-2xl items-center">
@@ -15,6 +62,51 @@ export function Header() {
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <ThemeToggle />
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                      src={user.photoURL || undefined}
+                      alt={faculty?.name || user.email || ""}
+                    />
+                    <AvatarFallback>
+                      {faculty?.name
+                        ? getInitials(faculty.name)
+                        : user.email
+                        ? getInitials(user.email)
+                        : <UserIcon />}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {faculty?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild>
+              <Link href="/login">
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

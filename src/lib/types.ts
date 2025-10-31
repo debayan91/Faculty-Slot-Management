@@ -1,8 +1,7 @@
-export interface User {
-  empId: string;
-  name: string;
-  email: string;
-}
+import { type User as FirebaseUser } from "firebase/auth";
+import { type Faculty } from "@/firebase/firestore/users";
+
+export interface User extends FirebaseUser, Faculty {}
 
 export interface Course {
   id: string;

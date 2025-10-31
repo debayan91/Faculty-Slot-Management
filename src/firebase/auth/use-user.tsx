@@ -4,7 +4,7 @@ import type { User } from 'firebase/auth';
 import { onIdTokenChanged } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { type Faculty, getFacultyProfile } from '@/firebase/firestore/users';
 
 export type UserState = {
@@ -15,6 +15,7 @@ export type UserState = {
 
 export function useUser() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const [userState, setUserState] = useState<UserState>({
     user: auth?.currentUser ?? null,
     faculty: null,
@@ -22,10 +23,10 @@ export function useUser() {
   });
 
   useEffect(() => {
-    if (auth) {
+    if (auth && firestore) {
       const unsubscribe = onIdTokenChanged(auth, async (user) => {
         if (user) {
-          const facultyProfile = await getFacultyProfile(user.uid);
+          const facultyProfile = await getFacultyProfile(firestore, user.uid);
           setUserState({ user, faculty: facultyProfile, loading: false });
         } else {
           setUserState({ user: null, faculty: null, loading: false });
@@ -35,7 +36,7 @@ export function useUser() {
     } else {
       setUserState({ user: null, faculty: null, loading: false });
     }
-  }, [auth]);
+  }, [auth, firestore]);
 
   return userState;
 }

@@ -1,55 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { MOCK_COURSES, MOCK_SLOTS, MOCK_USER_EMAIL } from "@/lib/mock-data";
-import type { User, Course, Slot } from "@/lib/types";
+import { MOCK_COURSES, MOCK_SLOTS } from "@/lib/mock-data";
+import type { Course, Slot } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { CheckCircle, Loader2 } from "lucide-react";
+import { useUser } from "@/firebase";
 
 export default function CourseRegistration() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { user, faculty, loading: userLoading } = useUser();
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [currentView, setCurrentView] = useState("verification");
+  const [currentView, setCurrentView] = useState("courseSelection");
   const [isLoading, setIsLoading] = useState(false);
   const [slotsData, setSlotsData] = useState(MOCK_SLOTS);
 
   const resetApp = () => {
-    setCurrentUser(null);
     setSelectedCourse(null);
     setSelectedDay(null);
     setSelectedSlot(null);
-    setErrorMessage("");
-    setCurrentView("verification");
+    setCurrentView("courseSelection");
   };
 
-  const handleVerification = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setErrorMessage("");
-    const formData = new FormData(e.currentTarget);
-    const empId = formData.get("empId") as string;
-    const fullName = formData.get("fullName") as string;
+  if (userLoading) {
+     return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
-    if (!empId || !fullName) {
-      setErrorMessage("Please enter both fields.");
-      return;
-    }
-
-    setIsLoading(true);
-    setTimeout(() => {
-      setCurrentUser({
-        empId,
-        name: fullName,
-        email: MOCK_USER_EMAIL,
-      });
-      setCurrentView("courseSelection");
-      setIsLoading(false);
-    }, 500);
-  };
+  if (!user) {
+    return (
+        <div className="text-center">
+            <h1 className="main-heading">Welcome to the Faculty Portal</h1>
+            <p className="sub-heading">Please log in to register for courses.</p>
+        </div>
+    )
+  }
 
   const handleCourseSelect = (course: Course) => {
     setSelectedCourse(course);
@@ -104,38 +93,12 @@ export default function CourseRegistration() {
         </div>
       )}
 
-      {currentView === "verification" && (
-        <div id="verification-section">
-          <h1 className="main-heading">
+      {currentView === "courseSelection" && selectedCourse === null && (
+        <div id="course-selection-section">
+           <h1 className="main-heading">
             Register for <span className="gradient-text">New Courses</span>
           </h1>
-          <p className="sub-heading">
-            Start by verifying your faculty details below.
-          </p>
-
-          <form onSubmit={handleVerification}>
-            <div className="grid grid-cols-1 md:grid-cols-2 md:gap-4">
-              <div className="mb-4 md:mb-0">
-                <Label htmlFor="empId" className="block text-sm font-medium mb-2 text-light">Employee ID</Label>
-                <Input type="text" id="empId" name="empId" className="input-field" placeholder="e.g., E-1001" defaultValue="E-1001" />
-              </div>
-              <div>
-                <Label htmlFor="fullName" className="block text-sm font-medium mb-2 text-light">Full Name</Label>
-                <Input type="text" id="fullName" name="fullName" className="input-field !mb-0" placeholder="e.g., Dr. Jane Doe" defaultValue="Dr. Jane Doe" />
-              </div>
-            </div>
-
-            <Button type="submit" className="supabase-button mt-6 w-full" disabled={isLoading}>
-              Verify & Proceed
-            </Button>
-            {errorMessage && <p className="error-message">{errorMessage}</p>}
-          </form>
-        </div>
-      )}
-
-      {currentView === "courseSelection" && selectedCourse === null && (
-        <div id="course-selection-section" className="section-divider">
-          <h2 className="section-heading">Welcome, <span className="gradient-text">{currentUser?.name}</span>!</h2>
+          <h2 className="sub-heading">Welcome, <span className="gradient-text">{faculty?.name || user?.email}</span>!</h2>
           <p className="mb-6 text-light">1. Please select a course to continue.</p>
           <div className="space-y-4">
             {MOCK_COURSES.map((course) => (
@@ -194,11 +157,11 @@ export default function CourseRegistration() {
             <CheckCircle className="w-20 h-20 text-primary" />
           </div>
           <h2 className="section-heading !text-center">Registration Confirmed!</h2>
-          <p className="sub-heading !text-center !mb-1">Thank you, <span className="font-medium-theme text-normal">{currentUser?.name}</span>.</p>
+          <p className="sub-heading !text-center !mb-1">Thank you, <span className="font-medium-theme text-normal">{faculty?.name}</span>.</p>
           <p className="mb-4 text-light">
             Your slot for <span className="font-medium-theme text-normal">{selectedCourse?.name}</span> on <span className="font-medium-theme text-normal">{selectedSlot.time}</span> is booked.
           </p>
-          <p className="text-sm mb-6 text-light">A confirmation email has been *simulated* to <span className="font-medium-theme text-light">{currentUser?.email}</span>.</p>
+          <p className="text-sm mb-6 text-light">A confirmation email has been *simulated* to <span className="font-medium-theme text-light">{user?.email}</span>.</p>
 
           <Button onClick={resetApp} className="supabase-button">Register for Another Course</Button>
         </div>
