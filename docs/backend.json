@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "Faculty": {
+      "title": "Faculty",
+      "description": "Represents a faculty member in the system.",
+      "type": "object",
+      "properties": {
+        "empId": {
+          "type": "string",
+          "description": "Employee ID of the faculty member."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The associated user ID from Firebase Authentication."
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the faculty member."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address of the faculty member."
+        },
+        "department": {
+          "type": "string",
+          "description": "The department the faculty member belongs to."
+        },
+        "role": {
+          "type": "string",
+          "description": "Role of the user, e.g., 'faculty' or 'admin'.",
+          "enum": ["faculty", "admin"]
+        }
+      },
+      "required": ["empId", "userId", "name", "email", "role"]
+    },
+    "Slot": {
+      "title": "Slot",
+      "description": "Represents a bookable time slot.",
+      "type": "object",
+      "properties": {
+        "slotDatetime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The start date and time of the slot."
+        },
+        "durationMinutes": {
+          "type": "number",
+          "description": "The duration of the slot in minutes."
+        },
+        "isBooked": {
+          "type": "boolean",
+          "description": "Whether the slot is currently booked."
+        },
+        "bookedBy": {
+          "type": "string",
+          "description": "The empId of the faculty member who booked the slot."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The last time the slot was updated."
+        }
+      },
+      "required": ["slotDatetime", "durationMinutes", "isBooked"]
+    },
+    "ActivityLog": {
+      "title": "Activity Log",
+      "description": "Logs actions performed by users in the system.",
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "The action that was performed (e.g., 'book_slot', 'release_slot')."
+        },
+        "performedBy": {
+          "type": "string",
+          "description": "The empId of the user who performed the action."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the action was performed."
+        },
+        "details": {
+          "type": "object",
+          "description": "A JSON object containing details about the action."
+        }
+      },
+      "required": ["action", "performedBy", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/faculties/{facultyId}": {
+      "schema": { "$ref": "#/entities/Faculty" },
+      "description": "Stores faculty profiles."
+    },
+    "/slots/{slotId}": {
+      "schema": { "$ref": "#/entities/Slot" },
+      "description": "Stores all available and booked time slots."
+    },
+    "/activity_logs/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Stores an audit trail of all actions."
+    }
+  }
+}
