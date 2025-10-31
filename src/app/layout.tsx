@@ -9,7 +9,6 @@ import { FirebaseClientProvider } from "@/firebase";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: "100",
 });
 
 export const metadata: Metadata = {
