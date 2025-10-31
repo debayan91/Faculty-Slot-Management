@@ -4,22 +4,22 @@
 
 @layer base {
   :root {
-    --background: 210 10% 9%; /* Near-black */
+    --background: 0 0% 4%; /* Black */
     --foreground: 210 40% 98%;
 
-    --card: 210 10% 9%;
+    --card: 0 0% 4%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 210 10% 9%;
+    --popover: 0 0% 4%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 158 64% 37%; /* Supabase Green */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 10% 13%;
+    --secondary: 158 84% 9%; /* Dark Green */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 10% 13%;
+    --muted: 158 84% 9%;
     --muted-foreground: 210 40% 60%; /* Lighter gray for muted text */
 
     --accent: 158 64% 37%; /* Using green for accent */
@@ -36,22 +36,22 @@
   }
 
   .dark {
-    --background: 210 10% 9%; /* Near-black */
+    --background: 0 0% 4%; /* Black */
     --foreground: 210 40% 98%;
 
-    --card: 210 10% 9%;
+    --card: 0 0% 4%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 210 10% 9%;
+    --popover: 0 0% 4%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 158 64% 37%; /* Supabase Green */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 10% 13%;
+    --secondary: 158 84% 9%; /* Dark Green */
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 10% 13%;
+    --muted: 158 84% 9%;
     --muted-foreground: 210 40% 60%; /* Lighter gray for muted text */
 
     --accent: 158 64% 37%; /* Using green for accent */
