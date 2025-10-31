@@ -17,12 +17,21 @@ export function useUser() {
   const auth = useAuth();
   const firestore = useFirestore();
   const [userState, setUserState] = useState<UserState>({
-    user: auth?.currentUser ?? null,
+    user: null,
     faculty: null,
     loading: true,
   });
 
   useEffect(() => {
+    // Set initial state from currentUser, if available
+    if (auth?.currentUser) {
+      getFacultyProfile(firestore, auth.currentUser.uid).then(facultyProfile => {
+        setUserState({ user: auth.currentUser, faculty: facultyProfile, loading: false });
+      });
+    } else {
+        setUserState({ user: null, faculty: null, loading: false });
+    }
+
     if (auth && firestore) {
       const unsubscribe = onIdTokenChanged(auth, async (user) => {
         if (user) {
@@ -33,9 +42,6 @@ export function useUser() {
         }
       });
       return () => unsubscribe();
-    } else {
-      // If auth or firestore is not available, we are not authenticated.
-      setUserState({ user: null, faculty: null, loading: false });
     }
   }, [auth, firestore]);
 

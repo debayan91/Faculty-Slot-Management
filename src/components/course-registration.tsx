@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useUser } from "@/firebase";
 import Link from "next/link";
+import { CardDescription, CardTitle } from "./ui/card";
 
 export default function CourseRegistration() {
   const { user, faculty, loading: userLoading } = useUser();
@@ -96,10 +97,17 @@ export default function CourseRegistration() {
 
       {currentView === "courseSelection" && selectedCourse === null && (
         <div id="course-selection-section">
-           <h1 className="main-heading">
-            Register for <span className="gradient-text">New Courses</span>
-          </h1>
-          <h2 className="sub-heading">Welcome, <span className="gradient-text">{faculty?.name || user?.email}</span>!</h2>
+           <div className="flex justify-between items-center mb-4">
+            <div>
+              <h1 className="main-heading">
+                Register for <span className="gradient-text">New Courses</span>
+              </h1>
+              <h2 className="sub-heading">Welcome, <span className="gradient-text">{faculty?.name || user?.email}</span>!</h2>
+            </div>
+            <Button asChild>
+                <Link href="/my-booked-slots">My Booked Slots</Link>
+            </Button>
+           </div>
           <p className="mb-6 text-light">1. Please select a course to continue.</p>
           <div className="space-y-4">
             {MOCK_COURSES.map((course) => (
