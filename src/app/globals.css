@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 4%; /* Black */
+    --background: 0 0% 0%; /* Black */
     --foreground: 210 40% 98%;
 
     --card: 0 0% 4%;
@@ -36,7 +36,7 @@
   }
 
   .dark {
-    --background: 0 0% 4%; /* Black */
+    --background: 0 0% 0%; /* Black */
     --foreground: 210 40% 98%;
 
     --card: 0 0% 4%;
@@ -120,7 +120,7 @@
 .animated-gradient-bg {
   background: linear-gradient(-45deg, hsl(var(--background)), hsl(var(--secondary)), hsl(var(--background)));
   background-size: 400% 400%;
-  animation: gradient-animation 15s ease infinite;
+  animation: gradient-animation 25s ease infinite;
 }
 
 .gradient-text {
