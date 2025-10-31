@@ -1,15 +1,9 @@
+import CourseRegistration from "@/components/course-registration";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
-          Faculty Slot Management
-        </h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">
-          Coming Soon
-        </p>
-      </div>
+    <main className="flex flex-col items-center justify-start p-4 md:p-8">
+      <CourseRegistration />
     </main>
   );
 }
