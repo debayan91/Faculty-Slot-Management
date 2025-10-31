@@ -1,0 +1,25 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow read/write access to a user's own faculty document
+    match /faculties/{userId} {
+      allow read, create: if request.auth.uid == userId;
+    }
+
+    // Slots can be read by any authenticated user.
+    // Booking/releasing a slot (write) should be handled by secure backend functions,
+    // so we will keep this restrictive for now.
+    match /slots/{slotId} {
+      allow read: if request.auth != null;
+      allow write: if false; // To be handled by backend functions later
+    }
+
+    // Activity logs are for admins, so we restrict access for now.
+    match /activity_logs/{logId} {
+      allow read, write: if false; // Admin-only access will be added
+    }
+  }
+}
