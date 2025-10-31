@@ -11,7 +11,7 @@ export default function MyBookedSlotsPage() {
 
   if (userLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-screen -mt-24">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );

@@ -23,6 +23,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { createFacultyProfile } from "@/firebase/firestore/users";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const auth = useAuth();
@@ -87,7 +88,11 @@ export default function LoginPage() {
   };
 
   if (userLoading || (!userLoading && user)) {
-    return null; // Render nothing while checking auth status or if user is already logged in
+    return (
+      <div className="flex items-center justify-center h-screen -mt-24">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (

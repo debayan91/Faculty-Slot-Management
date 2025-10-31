@@ -23,16 +23,19 @@ export function useUser() {
   });
 
   useEffect(() => {
-    // Set initial state from currentUser, if available
-    if (auth?.currentUser) {
-      getFacultyProfile(firestore, auth.currentUser.uid).then(facultyProfile => {
-        setUserState({ user: auth.currentUser, faculty: facultyProfile, loading: false });
-      });
-    } else {
-        setUserState({ user: null, faculty: null, loading: false });
-    }
-
     if (auth && firestore) {
+      // Set initial state from currentUser, if available, but keep loading true
+      // until the onIdTokenChanged listener has had a chance to run.
+      if (auth.currentUser) {
+        getFacultyProfile(firestore, auth.currentUser.uid).then(facultyProfile => {
+          // We set the user here to avoid a flicker, but loading remains true
+          setUserState(prevState => ({ ...prevState, user: auth.currentUser, faculty: facultyProfile }));
+        });
+      } else {
+        // If there's no current user, we can be pretty sure we're done loading.
+        setUserState({ user: null, faculty: null, loading: false });
+      }
+
       const unsubscribe = onIdTokenChanged(auth, async (user) => {
         if (user) {
           const facultyProfile = await getFacultyProfile(firestore, user.uid);
@@ -42,6 +45,9 @@ export function useUser() {
         }
       });
       return () => unsubscribe();
+    } else {
+        // If firebase services aren't available, we aren't loading.
+        setUserState({ user: null, faculty: null, loading: false });
     }
   }, [auth, firestore]);
 

@@ -46,7 +46,7 @@ export default function CourseRegistration() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center h-screen -mt-24">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -54,9 +54,11 @@ export default function CourseRegistration() {
 
   if (!user || !faculty) {
     return (
-      <div className="text-center">
-        <h1 className="main-heading">Welcome to the Faculty Portal</h1>
-        <p className="sub-heading">Please <Link href="/login" className="underline text-primary">log in</Link> to register for courses.</p>
+      <div className="flex justify-center items-center h-screen -mt-24">
+        <div className="text-center">
+          <h1 className="main-heading">Welcome to the Faculty Portal</h1>
+          <p className="sub-heading">Please <Link href="/login" className="underline text-primary">log in</Link> to register for courses.</p>
+        </div>
       </div>
     )
   }
