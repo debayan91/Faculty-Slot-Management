@@ -19,9 +19,9 @@ service cloud.firestore {
       allow read: if request.auth != null;
       // Allow a user to update a slot only if they are booking it (isBooked: false -> true)
       allow update: if request.auth != null
-                    && resource.data.isBooked == true
-                    && resource.data.bookedBy == request.resource.data.bookedBy // User can't change who booked it
-                    && request.resource.data.isBooked == true;
+                    && request.resource.data.isBooked == true
+                    && request.resource.data.bookedBy != null
+                    && resource.data.isBooked == false;
     }
 
     // Activity logs are for admins, so we restrict access for now.
