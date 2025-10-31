@@ -1,3 +1,137 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 10% 9%; /* Near-black */
+    --foreground: 210 40% 98%;
+
+    --card: 210 10% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 210 10% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 158 64% 37%; /* Supabase Green */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 10% 13%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 10% 13%;
+    --muted-foreground: 210 40% 60%; /* Lighter gray for muted text */
+
+    --accent: 158 64% 37%; /* Using green for accent */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 210 10% 20%;
+    --input: 210 10% 11%;
+    --ring: 158 64% 37%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 210 10% 9%; /* Near-black */
+    --foreground: 210 40% 98%;
+
+    --card: 210 10% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 210 10% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 158 64% 37%; /* Supabase Green */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 10% 13%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 10% 13%;
+    --muted-foreground: 210 40% 60%; /* Lighter gray for muted text */
+
+    --accent: 158 64% 37%; /* Using green for accent */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 210 10% 20%;
+    --input: 210 10% 11%;
+    --ring: 158 64% 37%;
+  }
+
+  html.light {
+    --background: 210 20% 98%; /* Light Mode Background */
+    --foreground: 210 10% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 10% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 10% 13%;
+
+    --primary: 158 64% 37%; /* Supabase Green */
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 210 10% 13%;
+
+    --muted: 210 20% 94%;
+    --muted-foreground: 210 10% 40%;
+
+    --accent: 158 64% 37%; /* Using green for accent */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 210 20% 87%;
+    --input: 0 0% 100%;
+    --ring: 158 64% 37%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.gradient-text {
+  @apply text-primary;
+}
+
+.supabase-button {
+  @apply bg-primary text-primary-foreground;
+}
+
+.supabase-button:hover {
+  @apply bg-primary/90 -translate-y-px;
+}
+
+.supabase-button:disabled {
+  @apply bg-secondary text-muted-foreground cursor-not-allowed transform-none;
+}
+
+.supabase-button-secondary {
+  @apply bg-secondary text-muted-foreground border border-border;
+}
+
+.supabase-button-secondary:hover:not(:disabled) {
+  @apply bg-muted/80 border-border/80 -translate-y-px;
+}
+
+.button-selected {
+  @apply bg-primary/90 border-primary text-primary-foreground transform-none;
+}
+.button-selected:hover {
+  @apply bg-primary/90 transform-none;
+}
