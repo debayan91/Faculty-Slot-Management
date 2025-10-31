@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/header";
 import { FirebaseClientProvider } from "@/firebase";
-import { AnimatedBackground } from "@/components/animated-background";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,12 +29,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <AnimatedBackground />
-            <div className="relative z-10">
-              <Header />
-              {children}
-              <Toaster />
-            </div>
+            <Header />
+            {children}
+            <Toaster />
           </FirebaseClientProvider>
         </ThemeProvider>
       </body>
