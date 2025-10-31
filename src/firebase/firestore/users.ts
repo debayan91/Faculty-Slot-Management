@@ -7,7 +7,6 @@ import {
   type DocumentData,
   type Firestore,
 } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 
 export interface Faculty extends DocumentData {
   empId: string;
@@ -25,6 +24,7 @@ export async function getFacultyProfile(db: Firestore, userId: string): Promise<
     if (facultySnap.exists()) {
         return facultySnap.data() as Faculty;
     } else {
+        console.log(`No faculty profile found for user ${userId}`);
         return null;
     }
 }
@@ -34,6 +34,7 @@ export async function createFacultyProfile(db: Firestore, userId: string, data: 
     const facultySnap = await getDoc(facultyRef);
 
     if (!facultySnap.exists()) {
+        console.log(`Creating faculty profile for user ${userId}`);
         await setDoc(facultyRef, {
             ...data,
             userId,

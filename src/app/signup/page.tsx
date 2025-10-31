@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import { createFacultyProfile } from "@/firebase/firestore/users";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function SignupPage() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [fullName, setFullName] = useState("");
@@ -50,7 +51,7 @@ export default function SignupPage() {
       );
       const user = userCredential.user;
 
-      await createFacultyProfile(user.uid, {
+      await createFacultyProfile(firestore, user.uid, {
         empId: user.uid.slice(0, 8), // Use part of UID as a mock employee ID
         name: fullName,
         email: user.email!,
@@ -71,7 +72,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-screen -mt-24">
       <Card className="w-full max-w-sm">
         <form onSubmit={handleSignUp}>
           <CardHeader>

@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,6 +26,7 @@ import { createFacultyProfile } from "@/firebase/firestore/users";
 
 export default function LoginPage() {
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
@@ -58,7 +59,7 @@ export default function LoginPage() {
       const user = result.user;
       
       // Check if user profile already exists, if not create one
-      await createFacultyProfile(user.uid, {
+      await createFacultyProfile(firestore, user.uid, {
         empId: user.uid.slice(0, 8), // simplified empId
         name: user.displayName || 'Google User',
         email: user.email!,
@@ -79,7 +80,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center h-screen -mt-24">
       <Card className="w-full max-w-sm">
         <form onSubmit={handleLogin}>
           <CardHeader>

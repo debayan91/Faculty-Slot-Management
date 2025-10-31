@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 import { Header } from "@/components/header";
 import { FirebaseClientProvider } from "@/firebase";
 
-const montserrat = Montserrat({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Faculty Course Registration",
-  description: "Register for new courses",
+  title: "Faculty Slot Management",
+  description: "Book and manage faculty time slots",
 };
 
 export default function RootLayout({
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(montserrat.className)}>
+      <body className={cn(inter.className)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

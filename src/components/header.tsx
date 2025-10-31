@@ -11,6 +11,7 @@ import {
   LogOut,
   User as UserIcon,
   LogIn,
+  ShieldCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -57,7 +58,7 @@ export function Header() {
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <BookOpenCheck className="h-6 w-6" />
-            <span className="font-bold">Faculty Portal</span>
+            <span className="font-bold">Faculty Slot Management</span>
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-2">
@@ -75,7 +76,7 @@ export function Header() {
                       {faculty?.name
                         ? getInitials(faculty.name)
                         : user.email
-                        ? getInitials(user.email)
+                        ? user.email.substring(0, 2).toUpperCase()
                         : <UserIcon />}
                     </AvatarFallback>
                   </Avatar>
@@ -93,6 +94,12 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {faculty?.role === 'admin' && (
+                  <DropdownMenuItem onClick={() => router.push('/admin')}>
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    <span>Admin</span>
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>

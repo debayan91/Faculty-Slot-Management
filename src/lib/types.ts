@@ -1,7 +1,8 @@
 import { type User as FirebaseUser } from "firebase/auth";
-import { type Faculty } from "@/firebase/firestore/users";
+import type { Faculty as FacultyDoc } from "@/firebase/firestore/users";
 
-export interface User extends FirebaseUser, Faculty {}
+// We can extend the base user with our own faculty profile data
+export interface User extends FirebaseUser, Partial<FacultyDoc> {}
 
 export interface Course {
   id: string;

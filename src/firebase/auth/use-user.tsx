@@ -34,6 +34,7 @@ export function useUser() {
       });
       return () => unsubscribe();
     } else {
+      // If auth or firestore is not available, we are not authenticated.
       setUserState({ user: null, faculty: null, loading: false });
     }
   }, [auth, firestore]);

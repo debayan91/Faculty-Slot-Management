@@ -105,8 +105,56 @@
   }
 }
 
+.google-signin-button {
+    @apply flex items-center justify-center w-full bg-white text-gray-700 border border-gray-300 rounded-md shadow-sm px-4 py-2 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+}
+
+.google-icon {
+    @apply mr-3 h-5 w-5;
+}
+
+.card-container {
+  @apply rounded-lg border bg-card text-card-foreground shadow-sm p-6;
+}
+
+.main-heading {
+  @apply text-3xl font-bold tracking-tight mb-2;
+}
+
+.sub-heading {
+  @apply text-lg text-muted-foreground mb-6;
+}
+
 .gradient-text {
   @apply text-primary;
+}
+
+.text-light {
+  @apply text-muted-foreground;
+}
+
+.font-medium-theme {
+  @apply font-medium;
+}
+
+.text-normal {
+  @apply text-foreground;
+}
+
+.course-card {
+  @apply border p-4 rounded-md text-left transition-colors hover:bg-muted;
+}
+
+.section-divider {
+  @apply mt-8 pt-6 border-t;
+}
+
+.section-heading {
+  @apply text-2xl font-semibold mb-2;
+}
+
+.slot-button {
+  @apply justify-center;
 }
 
 .supabase-button {
@@ -134,12 +182,4 @@
 }
 .button-selected:hover {
   @apply bg-primary/90 transform-none;
-}
-
-.google-signin-button {
-    @apply flex items-center justify-center w-full bg-white text-gray-700 border border-gray-300 rounded-md shadow-sm px-4 py-2 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
-}
-
-.google-icon {
-    @apply mr-3 h-5 w-5;
 }

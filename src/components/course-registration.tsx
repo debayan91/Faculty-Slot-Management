@@ -6,6 +6,7 @@ import type { Course, Slot } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { useUser } from "@/firebase";
+import Link from "next/link";
 
 export default function CourseRegistration() {
   const { user, faculty, loading: userLoading } = useUser();
@@ -35,7 +36,7 @@ export default function CourseRegistration() {
     return (
         <div className="text-center">
             <h1 className="main-heading">Welcome to the Faculty Portal</h1>
-            <p className="sub-heading">Please log in to register for courses.</p>
+            <p className="sub-heading">Please <Link href="/login" className="underline text-primary">log in</Link> to register for courses.</p>
         </div>
     )
   }
