@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
@@ -7,7 +7,10 @@ import { cn } from "@/lib/utils";
 import { Header } from "@/components/header";
 import { FirebaseClientProvider } from "@/firebase";
 
-const inter = Inter({ subsets: ["latin"] });
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: "100",
+});
 
 export const metadata: Metadata = {
   title: "Faculty Slot Management",
@@ -21,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(inter.className)}>
+      <body className={cn(montserrat.className)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
