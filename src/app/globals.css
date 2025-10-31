@@ -4,95 +4,95 @@
 
 @layer base {
   :root {
-    --background: 0 0% 0%; /* Black */
+    --background: 224 15% 8%; /* near-black: #12141A */
     --foreground: 210 40% 98%;
 
-    --card: 0 0% 4%;
+    --card: 224 15% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 4%;
+    --popover: 224 15% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 158 64% 37%; /* Supabase Green */
+    --primary: 225 31% 46%; /* indigo: #4F669B */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 158 84% 9%; /* Dark Green */
+    --secondary: 224 15% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 158 84% 9%;
-    --muted-foreground: 210 40% 60%; /* Lighter gray for muted text */
+    --muted: 224 15% 15%;
+    --muted-foreground: 210 40% 60%;
 
-    --accent: 158 64% 37%; /* Using green for accent */
+    --accent: 258 48% 55%; /* violet: #7B5ABF */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 210 10% 20%;
-    --input: 210 10% 11%;
-    --ring: 158 64% 37%;
+    --border: 224 15% 20%;
+    --input: 224 15% 15%;
+    --ring: 258 48% 55%;
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 0 0% 0%; /* Black */
+    --background: 224 15% 8%; /* near-black: #12141A */
     --foreground: 210 40% 98%;
 
-    --card: 0 0% 4%;
+    --card: 224 15% 11%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 4%;
+    --popover: 224 15% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 158 64% 37%; /* Supabase Green */
+    --primary: 225 31% 46%; /* indigo: #4F669B */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 158 84% 9%; /* Dark Green */
+    --secondary: 224 15% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 158 84% 9%;
-    --muted-foreground: 210 40% 60%; /* Lighter gray for muted text */
+    --muted: 224 15% 15%;
+    --muted-foreground: 210 40% 60%;
 
-    --accent: 158 64% 37%; /* Using green for accent */
+    --accent: 258 48% 55%; /* violet: #7B5ABF */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 210 10% 20%;
-    --input: 210 10% 11%;
-    --ring: 158 64% 37%;
+    --border: 224 15% 20%;
+    --input: 224 15% 15%;
+    --ring: 258 48% 55%;
   }
 
   html.light {
-    --background: 210 20% 98%; /* Light Mode Background */
-    --foreground: 210 10% 13%;
+    --background: 0 0% 100%;
+    --foreground: 224 15% 8%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 210 10% 13%;
+    --card: 0 0% 96%;
+    --card-foreground: 224 15% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 10% 13%;
+    --popover-foreground: 224 15% 8%;
 
-    --primary: 158 64% 37%; /* Supabase Green */
+    --primary: 225 31% 46%;
     --primary-foreground: 210 40% 98%;
     
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 210 10% 13%;
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 224 15% 8%;
 
-    --muted: 210 20% 94%;
-    --muted-foreground: 210 10% 40%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 224 15% 40%;
 
-    --accent: 158 64% 37%; /* Using green for accent */
+    --accent: 258 48% 55%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 210 20% 87%;
-    --input: 0 0% 100%;
-    --ring: 158 64% 37%;
+    --border: 224 15% 87%;
+    --input: 0 0% 92%;
+    --ring: 258 48% 55%;
   }
 }
 
@@ -118,7 +118,7 @@
 }
 
 .animated-gradient-bg {
-  background: linear-gradient(-45deg, hsl(var(--background)), hsla(158, 84%, 9%, 0.1), hsl(var(--background)));
+  background: linear-gradient(-45deg, hsl(var(--background)), hsla(var(--primary) / 0.1), hsl(var(--background)));
   background-size: 400% 400%;
   animation: gradient-animation 25s ease infinite;
 }
