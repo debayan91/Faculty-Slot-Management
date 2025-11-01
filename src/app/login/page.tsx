@@ -131,7 +131,7 @@ export default function LoginPage() {
               />
             </div>
             <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}
             </Button>
             <Separator className="my-2" />
             <Button
