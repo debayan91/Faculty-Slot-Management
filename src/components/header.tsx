@@ -13,7 +13,6 @@ import {
   User as UserIcon,
   LogIn,
   ShieldCheck,
-  ShieldAlert,
   UserCog,
   Home,
 } from "lucide-react";
@@ -28,6 +27,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/context/AdminProvider";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 export function Header() {
   const auth = useAuth();
@@ -51,20 +52,15 @@ export function Header() {
     }
   };
 
-  const handleAdminToggle = () => {
-    if (isAdmin) {
+  const handleAdminToggle = (isChecked: boolean) => {
+    if (isChecked) {
+      // If turning ON, navigate to admin auth page
+      router.push('/admin/auth');
+    } else {
+      // If turning OFF, deactivate admin and go home
       setIsAdmin(false);
       toast({ title: "Admin Mode Deactivated" });
       router.push('/');
-    } else {
-      const pass = prompt("Enter admin password:");
-      if (pass === "password1234") {
-        setIsAdmin(true);
-        toast({ title: "Admin Mode Activated" });
-        router.push("/admin");
-      } else if (pass !== null) {
-        toast({ variant: "destructive", title: "Incorrect Password" });
-      }
     }
   };
 
@@ -85,69 +81,68 @@ export function Header() {
             <span className="font-bold">Faculty Slot Management</span>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-2">
+        <div className="flex flex-1 items-center justify-end space-x-4">
           <ThemeToggle />
           {user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={user.photoURL || undefined}
-                      alt={faculty?.name || user.email || ""}
-                    />
-                    <AvatarFallback>
-                      {faculty?.name
-                        ? getInitials(faculty.name)
-                        : user.email
-                        ? user.email.substring(0, 2).toUpperCase()
-                        : <UserIcon />}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {faculty?.name}
-                    </p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                 <DropdownMenuItem onClick={() => router.push('/')}>
-                    <Home className="mr-2 h-4 w-4" />
-                    <span>Home</span>
-                  </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => router.push('/admin')}>
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    <span>Admin Dashboard</span>
-                  </DropdownMenuItem>
-                )}
-                 <DropdownMenuItem onClick={handleAdminToggle}>
-                  {isAdmin ? (
-                    <>
-                      <ShieldAlert className="mr-2 h-4 w-4" />
-                      <span>Deactivate Admin</span>
-                    </>
-                  ) : (
-                    <>
+            <>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="admin-mode-switch" className="text-sm font-medium">
+                  Admin
+                </Label>
+                <Switch
+                  id="admin-mode-switch"
+                  checked={isAdmin}
+                  onCheckedChange={handleAdminToggle}
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={user.photoURL || undefined}
+                        alt={faculty?.name || user.email || ""}
+                      />
+                      <AvatarFallback>
+                        {faculty?.name
+                          ? getInitials(faculty.name)
+                          : user.email
+                          ? user.email.substring(0, 2).toUpperCase()
+                          : <UserIcon />}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {faculty?.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                   <DropdownMenuItem onClick={() => router.push('/')}>
+                      <Home className="mr-2 h-4 w-4" />
+                      <span>Home</span>
+                    </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => router.push('/admin')}>
                       <ShieldCheck className="mr-2 h-4 w-4" />
-                      <span>Activate Admin</span>
-                    </>
+                      <span>Admin Dashboard</span>
+                    </DropdownMenuItem>
                   )}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <div className="flex items-center gap-2">
               <Button asChild variant="outline">
