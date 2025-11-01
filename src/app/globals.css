@@ -34,7 +34,7 @@
     --input: 224 15% 15%;
     --ring: 142 76% 46%;
 
-    --radius: 0.5rem;
+    --radius: 0rem;
   }
 
   .dark {
@@ -134,7 +134,7 @@
   }
   
   .card-container {
-    @apply rounded-lg text-card-foreground p-6 glass-effect;
+    @apply text-card-foreground p-6 glass-effect;
   }
 
   .button, .input, .textarea, .select-trigger {
@@ -156,7 +156,7 @@
 
 
 .google-signin-button {
-    @apply flex items-center justify-center w-full bg-white text-gray-700 border border-gray-300 rounded-md shadow-sm px-4 py-2 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+    @apply flex items-center justify-center w-full bg-white text-gray-700 border border-gray-300 shadow-sm px-4 py-2 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
 }
 
 .google-icon {
@@ -188,7 +188,7 @@
 }
 
 .course-card {
-  @apply border p-4 rounded-md text-left transition-colors hover:bg-muted/30;
+  @apply border p-4 text-left transition-colors hover:bg-muted/30;
 }
 
 .section-divider {
