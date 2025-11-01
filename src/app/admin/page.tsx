@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, UserX, UserPlus, Database, Book, User, Trash2 } from 'lucide-react';
+import { Loader2, UserX, Book, User, Database } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -40,7 +40,16 @@ const getNextDateForDay = (dayOfWeek: string): Date => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const targetDayIndex = days.findIndex(d => d.toLowerCase() === dayOfWeek.toLowerCase());
   const now = new Date();
-  now.setDate(now.getDate() + (targetDayIndex + 7 - now.getDay()) % 7);
+  const todayIndex = now.getDay();
+  
+  // Calculate the difference in days
+  let dayDifference = targetDayIndex - todayIndex;
+  // If the target day is in the past for the current week, move to the next week
+  if (dayDifference < 0) {
+    dayDifference += 7;
+  }
+  
+  now.setDate(now.getDate() + dayDifference);
   return now;
 };
 
@@ -89,7 +98,7 @@ export default function AdminDashboardPage() {
 
   const handleSeedDatabase = async () => {
     if (!firestore) return;
-    const confirmSeed = confirm("Are you sure you want to seed the database? This will create slots for the entire upcoming week and may create duplicates if run more than once per week.");
+    const confirmSeed = confirm("Are you sure you want to seed the database? This will create slots for the entire upcoming week based on the timetable. This action avoids creating duplicates.");
     if (!confirmSeed) return;
 
     setIsSeeding(true);
@@ -107,7 +116,7 @@ export default function AdminDashboardPage() {
             const slotDatetime = date.toISOString();
 
             // Check for existing slot to avoid duplicates
-             const q = query(collection(firestore, 'slots'), where('slotDatetime', '==', slotDatetime));
+             const q = query(collection(firestore, 'slots'), where('slotDatetime', '==', slotDatetime), where('subjectCode', '==', timetableSlot.code));
              const existingSlots = await getDocs(q);
  
              if (existingSlots.empty) {
@@ -124,7 +133,7 @@ export default function AdminDashboardPage() {
         }
 
         await batch.commit();
-        toast({ title: 'Database Seeded', description: 'All slots for the next week have been created.' });
+        toast({ title: 'Database Seeded', description: 'All slots for the next week have been created or verified.' });
     } catch (error: any) {
         console.error("Error seeding database:", error);
         toast({ variant: 'destructive', title: 'Seeding Failed', description: error.message });
@@ -180,13 +189,17 @@ export default function AdminDashboardPage() {
                 const [startHours, startMinutes] = parseTime(ts.startTime);
                 dateForSlot.setHours(startHours, startMinutes, 0, 0);
 
-                const dbSlot = allSlots.find(s => 
-                    new Date(s.slotDatetime).getTime() === dateForSlot.getTime()
-                );
+                const dbSlot = allSlots.find(s => {
+                    const slotDate = new Date(s.slotDatetime);
+                    return slotDate.getFullYear() === dateForSlot.getFullYear() &&
+                           slotDate.getMonth() === dateForSlot.getMonth() &&
+                           slotDate.getDate() === dateForSlot.getDate() &&
+                           slotDate.getHours() === dateForSlot.getHours() &&
+                           slotDate.getMinutes() === dateForSlot.getMinutes();
+                });
                 
                 const slotId = dbSlot?.id;
-                const assignedTeacher = dbSlot?.teacherEmpId ? facultyMap.get(dbSlot.teacherEmpId) : null;
-
+                
                 return (
                   <div key={ts.code + ts.startTime} className="grid grid-cols-1 md:grid-cols-5 items-center p-3 border rounded-lg gap-4">
                     <div className="md:col-span-1">
@@ -226,6 +239,7 @@ export default function AdminDashboardPage() {
                                     <SelectValue placeholder="Assign Teacher..." />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="">Unassigned</SelectItem>
                                     {faculties.map(faculty => (
                                       <SelectItem key={faculty.id} value={faculty.empId}>{faculty.name}</SelectItem>
                                     ))}
@@ -240,7 +254,7 @@ export default function AdminDashboardPage() {
                                <UserX className="mr-2 h-4 w-4" /> Unassign
                             </Button>
                         )}
-                        {!slotId && <p className="text-xs text-muted-foreground self-center">Slot not in DB</p>}
+                        {!slotId && <p className="text-xs text-destructive self-center">Slot not in DB</p>}
                         </div>
                     </div>
                   </div>
