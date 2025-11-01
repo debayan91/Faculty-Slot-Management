@@ -23,7 +23,7 @@ export default function Home() {
       <main className="flex-grow flex items-center justify-center -mt-24">
         <div className="container mx-auto p-4">
           <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="flex flex-col items-center justify-center">
+            <div className="flex pt-[20%] flex-col items-center justify-center">
               <LoginForm />
             </div>
             <div className="hidden md:flex flex-col items-start text-left">
