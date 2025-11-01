@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   UserCog,
+  Home,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -54,6 +55,7 @@ export function Header() {
     if (isAdmin) {
       setIsAdmin(false);
       toast({ title: "Admin Mode Deactivated" });
+      router.push('/');
     } else {
       const pass = prompt("Enter admin password:");
       if (pass === "password1234") {
@@ -116,6 +118,10 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <DropdownMenuItem onClick={() => router.push('/')}>
+                    <Home className="mr-2 h-4 w-4" />
+                    <span>Home</span>
+                  </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem onClick={() => router.push('/admin')}>
                     <ShieldCheck className="mr-2 h-4 w-4" />
