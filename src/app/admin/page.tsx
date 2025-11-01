@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/context/AdminProvider';
-import { useFirestore, useUser } from '@/firebase';
-import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, doc, getDocs } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { useCollection, useCollectionData } from 'react-firebase-hooks/firestore';
+import { collection, doc, getDocs, query } from 'firebase/firestore';
 import type { Faculty, Slot } from '@/lib/types';
 import {
   Card,
@@ -31,35 +31,17 @@ import { format } from 'date-fns';
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { isAdmin, loading: adminLoading } = useAdmin();
-  const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [slotsData, slotsLoading] = useCollection(
-    collection(firestore, 'slots')
-  );
-  const [faculties, setFaculties] = useState<Faculty[]>([]);
-  const [facultiesLoading, setFacultiesLoading] = useState(true);
+  const [slotsData, slotsLoading] = useCollection(firestore ? collection(firestore, 'slots') : null);
+  const [facultiesData, facultiesLoading] = useCollectionData(firestore ? collection(firestore, 'faculties'): null);
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
       router.push('/');
     }
   }, [isAdmin, adminLoading, router]);
-
-  useEffect(() => {
-    async function fetchFaculties() {
-      if (!firestore) return;
-      setFacultiesLoading(true);
-      const facultySnapshot = await getDocs(collection(firestore, 'faculties'));
-      const facultyList = facultySnapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Faculty)
-      );
-      setFaculties(facultyList);
-      setFacultiesLoading(false);
-    }
-    fetchFaculties();
-  }, [firestore]);
 
   const allSlots: Slot[] = useMemo(
     () =>
@@ -71,6 +53,8 @@ export default function AdminDashboardPage() {
         : [],
     [slotsData]
   );
+  
+  const faculties = useMemo(() => (facultiesData as Faculty[]) || [], [facultiesData]);
 
   const facultyMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -99,11 +83,11 @@ export default function AdminDashboardPage() {
   }, [allSlots]);
 
   const sortedDays = useMemo(
-    () => Object.keys(slotsByDay).sort(),
+    () => Object.keys(slotsByDay).sort((a, b) => new Date(a).getTime() - new Date(b).getTime()),
     [slotsByDay]
   );
     
-  const loading = userLoading || adminLoading || slotsLoading || facultiesLoading;
+  const loading = adminLoading || slotsLoading || facultiesLoading;
 
   if (loading) {
     return (
@@ -122,6 +106,8 @@ export default function AdminDashboardPage() {
     slotId: string,
     facultyEmpId?: string
   ) => {
+    if (!firestore) return;
+    
     const confirmAction = confirm(`Are you sure you want to ${action} this slot?`);
     if (!confirmAction) return;
 
@@ -137,7 +123,7 @@ export default function AdminDashboardPage() {
         toast({ title: 'Slot Assigned', description: 'The slot has been assigned to the selected faculty.' });
       }
     } catch (error: any) {
-      toast({ variant: 'destructive', title: `Error: ${action}`, description: error.message });
+      toast({ variant: 'destructive', title: `Error performing ${action}`, description: error.message });
     }
   };
 
@@ -154,7 +140,7 @@ export default function AdminDashboardPage() {
         <CardContent>
           {sortedDays.length > 0 ? (
           <Tabs defaultValue={sortedDays[0]} className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-1">
               {sortedDays.map((day) => (
                 <TabsTrigger key={day} value={day}>
                   {format(new Date(day), 'EEE, MMM d')}
@@ -188,10 +174,13 @@ export default function AdminDashboardPage() {
                         {!slot.isBooked && (
                            <Select onValueChange={(empId) => handleAction('assign', slot.id, empId)}>
                             <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
-                                <UserPlus className="mr-2 h-4 w-4" />
                                 <SelectValue placeholder="Assign to..." />
                             </SelectTrigger>
                             <SelectContent>
+                                <div className="flex items-center px-3 py-1.5">
+                                 <UserPlus className="mr-2 h-4 w-4" />
+                                 <span className="text-sm">Assign to faculty</span>
+                                </div>
                                 {faculties.map(faculty => (
                                 <SelectItem key={faculty.id} value={faculty.empId}>{faculty.name}</SelectItem>
                                 ))}
