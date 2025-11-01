@@ -46,7 +46,7 @@ const getNextDateForDay = (dayOfWeek: string): Date => {
   
   let dayDifference = targetDayIndex - todayIndex;
   
-  if (dayDifference < 0 || (dayDifference === 0 && now.getHours() > 23)) {
+  if (dayDifference < 0 || (dayDifference === 0 && now.getHours() >= 23)) {
     dayDifference += 7;
   }
   
@@ -204,12 +204,13 @@ export default function AdminDashboardPage() {
                 const dbSlot = allSlots.find(s => {
                     if (!s.slotDatetime) return false;
                     const slotDate = new Date(s.slotDatetime);
-                    // Match by date parts and time, ignoring seconds/ms
+                    // Match by date parts and time, ignoring seconds/ms, to account for timezone differences
                     return slotDate.getFullYear() === dateForSlot.getFullYear() &&
                            slotDate.getMonth() === dateForSlot.getMonth() &&
                            slotDate.getDate() === dateForSlot.getDate() &&
                            slotDate.getHours() === dateForSlot.getHours() &&
-                           slotDate.getMinutes() === dateForSlot.getMinutes();
+                           slotDate.getMinutes() === dateForSlot.getMinutes() &&
+                           s.subjectCode === ts.code;
                 });
                 
                 const slotId = dbSlot?.id;
@@ -337,5 +338,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
