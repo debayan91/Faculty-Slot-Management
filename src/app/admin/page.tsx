@@ -39,18 +39,20 @@ type TimetableSlot = {
 const getNextDateForDay = (dayOfWeek: string): Date => {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const targetDayIndex = days.findIndex(d => d.toLowerCase() === dayOfWeek.toLowerCase());
+  if (targetDayIndex === -1) throw new Error("Invalid day of week");
+
   const now = new Date();
   const todayIndex = now.getDay();
   
-  // Calculate the difference in days
   let dayDifference = targetDayIndex - todayIndex;
-  // If the target day is in the past for the current week, move to the next week
-  if (dayDifference < 0) {
+  
+  if (dayDifference < 0 || (dayDifference === 0 && now.getHours() > 23)) {
     dayDifference += 7;
   }
   
-  now.setDate(now.getDate() + dayDifference);
-  return now;
+  const targetDate = new Date(now);
+  targetDate.setDate(now.getDate() + dayDifference);
+  return targetDate;
 };
 
 const parseTime = (timeStr: string): [number, number] => {
@@ -62,7 +64,7 @@ const parseTime = (timeStr: string): [number, number] => {
     if (modifier === 'AM' && hours === 12) { // Midnight case
         hours = 0;
     }
-    return [hours, minutes];
+    return [hours, minutes || 0];
 };
 
 export default function AdminDashboardPage() {
@@ -107,6 +109,7 @@ export default function AdminDashboardPage() {
     try {
         const batch = writeBatch(firestore);
         const allTimetableSlots = [...theoryClasses, ...labClasses];
+        let createdCount = 0;
 
         for (const timetableSlot of allTimetableSlots) {
             const date = getNextDateForDay(timetableSlot.day);
@@ -116,7 +119,10 @@ export default function AdminDashboardPage() {
             const slotDatetime = date.toISOString();
 
             // Check for existing slot to avoid duplicates
-             const q = query(collection(firestore, 'slots'), where('slotDatetime', '==', slotDatetime), where('subjectCode', '==', timetableSlot.code));
+             const q = query(collection(firestore, 'slots'), 
+                where('slotDatetime', '==', slotDatetime), 
+                where('subjectCode', '==', timetableSlot.code)
+             );
              const existingSlots = await getDocs(q);
  
              if (existingSlots.empty) {
@@ -129,11 +135,12 @@ export default function AdminDashboardPage() {
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp(),
                 });
+                createdCount++;
              }
         }
 
         await batch.commit();
-        toast({ title: 'Database Seeded', description: 'All slots for the next week have been created or verified.' });
+        toast({ title: 'Database Seeded', description: `${createdCount} new slots created. The timetable is now in sync.` });
     } catch (error: any) {
         console.error("Error seeding database:", error);
         toast({ variant: 'destructive', title: 'Seeding Failed', description: error.message });
@@ -195,7 +202,9 @@ export default function AdminDashboardPage() {
                 dateForSlot.setHours(startHours, startMinutes, 0, 0);
 
                 const dbSlot = allSlots.find(s => {
+                    if (!s.slotDatetime) return false;
                     const slotDate = new Date(s.slotDatetime);
+                    // Match by date parts and time, ignoring seconds/ms
                     return slotDate.getFullYear() === dateForSlot.getFullYear() &&
                            slotDate.getMonth() === dateForSlot.getMonth() &&
                            slotDate.getDate() === dateForSlot.getDate() &&
@@ -288,11 +297,12 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-       {loading && isSeeding && (
+       {isSeeding && (
         <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50 rounded-lg">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-lg font-medium">Seeding Database...</p>
+            <p className="text-sm text-muted-foreground">This may take a moment.</p>
           </div>
         </div>
       )}
@@ -327,3 +337,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
