@@ -1,29 +1,32 @@
+
 'use client';
 
-import { doc, updateDoc, serverTimestamp, type Firestore, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
 
-// Releases a slot, making it available again
-export async function releaseSlot(db: Firestore, slotId: string) {
+// Unassigns a teacher from a slot, making it available
+export async function unassignTeacher(db: Firestore, slotId: string) {
   const slotRef = doc(db, 'slots', slotId);
   await updateDoc(slotRef, {
-    isBooked: false,
-    bookedBy: null,
+    teacherEmpId: null,
     updatedAt: serverTimestamp(),
   });
 }
 
-// Deletes a slot document permanently
-export async function deleteSlot(db: Firestore, slotId: string) {
-  const slotRef = doc(db, 'slots', slotId);
-  await deleteDoc(slotRef);
-}
-
-// Assigns a slot to a specific faculty member
-export async function assignSlot(db: Firestore, slotId: string, facultyEmpId: string) {
+// Updates the subject code for a specific slot
+export async function updateSlotSubject(db: Firestore, slotId: string, newSubjectCode: string) {
   const slotRef = doc(db, 'slots', slotId);
   await updateDoc(slotRef, {
-    isBooked: true,
-    bookedBy: facultyEmpId,
+    subjectCode: newSubjectCode,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+
+// Assigns a slot to a specific faculty member (updates teacher)
+export async function updateSlotTeacher(db: Firestore, slotId: string, facultyEmpId: string) {
+  const slotRef = doc(db, 'slots', slotId);
+  await updateDoc(slotRef, {
+    teacherEmpId: facultyEmpId,
     updatedAt: serverTimestamp(),
   });
 }

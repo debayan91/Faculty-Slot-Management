@@ -19,15 +19,6 @@ export interface Faculty extends DocumentData {
   role: 'faculty' | 'admin';
 }
 
-export interface Slot extends DocumentData {
-  id: string;
-  slotDatetime: string;
-  durationMinutes: number;
-  courseId: string;
-  isBooked: boolean;
-  bookedBy?: string;
-}
-
 export async function getFacultyProfile(db: Firestore, userId: string): Promise<Faculty | null> {
     const facultyRef = doc(db, 'faculties', userId);
     const facultySnap = await getDoc(facultyRef);

@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Faculty": {
@@ -36,7 +37,7 @@
     },
     "Slot": {
       "title": "Slot",
-      "description": "Represents a bookable time slot.",
+      "description": "Represents a persistent time slot in the timetable.",
       "type": "object",
       "properties": {
         "slotDatetime": {
@@ -48,13 +49,13 @@
           "type": "number",
           "description": "The duration of the slot in minutes."
         },
-        "isBooked": {
-          "type": "boolean",
-          "description": "Whether the slot is currently booked."
-        },
-        "bookedBy": {
+        "subjectCode": {
           "type": "string",
-          "description": "The empId of the faculty member who booked the slot."
+          "description": "The subject code associated with this slot (e.g., 'A1', 'L32')."
+        },
+        "teacherEmpId": {
+          "type": ["string", "null"],
+          "description": "The empId of the faculty member assigned to this slot. Null if unassigned."
         },
         "updatedAt": {
           "type": "string",
@@ -62,7 +63,7 @@
           "description": "The last time the slot was updated."
         }
       },
-      "required": ["slotDatetime", "durationMinutes", "isBooked"]
+      "required": ["slotDatetime", "durationMinutes", "subjectCode"]
     },
     "ActivityLog": {
       "title": "Activity Log",
@@ -71,7 +72,7 @@
       "properties": {
         "action": {
           "type": "string",
-          "description": "The action that was performed (e.g., 'book_slot', 'release_slot')."
+          "description": "The action that was performed (e.g., 'assign_teacher', 'change_subject')."
         },
         "performedBy": {
           "type": "string",
@@ -100,7 +101,7 @@
     },
     "/slots/{slotId}": {
       "schema": { "$ref": "#/entities/Slot" },
-      "description": "Stores all available and booked time slots."
+      "description": "Stores all persistent time slots."
     },
     "/activity_logs/{logId}": {
       "schema": { "$ref": "#/entities/ActivityLog" },

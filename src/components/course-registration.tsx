@@ -77,6 +77,7 @@ export default function CourseRegistration() {
   };
 
   const handleSlotSelect = async (slot: Slot) => {
+    if (!faculty) return;
     const formattedTime = formatSlotTime(new Date(slot.slotDatetime));
     const isConfirmed = confirm(
       `Confirm booking for ${selectedCourse?.name} at ${formattedTime}?`
@@ -103,7 +104,8 @@ export default function CourseRegistration() {
   const getAvailableDays = () => {
     if (!selectedCourse) return [];
     
-    const courseSlots = allSlots.filter(slot => slot.courseId === selectedCourse.id && !slot.isBooked);
+    // A slot is available if it matches the course and has no teacher assigned
+    const courseSlots = allSlots.filter(slot => slot.subjectCode === selectedCourse.id && !slot.teacherEmpId);
     const availableDays = [...new Set(courseSlots.map(slot => new Date(slot.slotDatetime).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })))];
     
     return availableDays;
@@ -115,7 +117,7 @@ export default function CourseRegistration() {
     return allSlots.filter(slot => {
         const slotDate = new Date(slot.slotDatetime);
         const slotDayString = slotDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        return slot.courseId === selectedCourse.id && slotDayString === selectedDay;
+        return slot.subjectCode === selectedCourse.id && slotDayString === selectedDay;
     });
   }
 
@@ -181,7 +183,7 @@ export default function CourseRegistration() {
                         key={slot.id} 
                         className="slot-button"
                         variant="secondary"
-                        disabled={slot.isBooked}
+                        disabled={!!slot.teacherEmpId}
                         onClick={() => handleSlotSelect(slot)}
                     >
                         {getDisplayTime(new Date(slot.slotDatetime))}

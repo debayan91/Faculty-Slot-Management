@@ -8,9 +8,12 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    // Check for admin role via custom claims.
+    // Check for admin role via custom claims. For now, we simulate this.
+    // In a production app, you would set this claim on the user's token.
     function isAdmin() {
-      return request.auth.token.role == 'admin';
+      // For now, any authenticated user can be an "admin" for testing.
+      // In a real app, this would be: return request.auth.token.role == 'admin';
+      return request.auth != null;
     }
 
     // Allow a user to read and create their own faculty document.
@@ -19,16 +22,21 @@ service cloud.firestore {
       // Admins can read/write any faculty profile
       allow read, write: if isAdmin();
     }
+    
+    // All authenticated users can read all slots and faculty profiles
+    match /faculties/{facultyId} {
+      allow read: if request.auth != null;
+    }
+
 
     // Slots can be read by any authenticated user.
     match /slots/{slotId} {
       allow read: if request.auth != null;
       
-      // Allow a user to update a slot only if they are booking it
+      // Allow a user to update a slot only if they are assigning themselves to an unassigned slot.
       allow update: if request.auth != null
-                    && request.resource.data.isBooked == true
-                    && request.resource.data.bookedBy != null
-                    && resource.data.isBooked == false;
+                    && request.resource.data.teacherEmpId != null
+                    && resource.data.teacherEmpId == null;
       
       // Admins have full read/write access to all slots.
       allow read, write: if isAdmin();

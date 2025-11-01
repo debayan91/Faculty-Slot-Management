@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -14,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, Trash2, UserX, UserPlus, Database } from 'lucide-react';
+import { Loader2, UserX, UserPlus, Database, Book, User, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -25,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { releaseSlot, deleteSlot, assignSlot } from '@/firebase/firestore/admin';
+import { unassignTeacher, updateSlotSubject, updateSlotTeacher } from '@/firebase/firestore/admin';
 import { theoryClasses, labClasses } from '@/lib/timetable';
 
 type TimetableSlot = {
@@ -66,6 +67,7 @@ export default function AdminDashboardPage() {
   const [facultiesData, facultiesLoading] = useCollectionData(firestore ? collection(firestore, 'faculties'): null);
   
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const allCourseCodes = useMemo(() => [...new Set([...theoryClasses, ...labClasses].map(c => c.code))], []);
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -105,17 +107,16 @@ export default function AdminDashboardPage() {
             const slotDatetime = date.toISOString();
 
             // Check for existing slot to avoid duplicates
-             const q = query(collection(firestore, 'slots'), where('slotDatetime', '==', slotDatetime), where('courseId', '==', timetableSlot.code));
+             const q = query(collection(firestore, 'slots'), where('slotDatetime', '==', slotDatetime));
              const existingSlots = await getDocs(q);
  
              if (existingSlots.empty) {
                 const newSlotRef = doc(collection(firestore, 'slots'));
                 batch.set(newSlotRef, {
-                    courseId: timetableSlot.code,
+                    subjectCode: timetableSlot.code,
                     slotDatetime: slotDatetime,
                     durationMinutes: 50,
-                    isBooked: false,
-                    bookedBy: null,
+                    teacherEmpId: null,
                     createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp(),
                 });
@@ -132,27 +133,34 @@ export default function AdminDashboardPage() {
     }
   };
   
-  const handleAction = async (action: 'release' | 'delete' | 'assign', slotId: string, facultyEmpId?: string) => {
+  const handleSubjectChange = async (slotId: string, newSubjectCode: string) => {
     if (!firestore) return;
-    
-    if (action !== 'assign') {
-      const confirmAction = confirm(`Are you sure you want to ${action} this slot?`);
-      if (!confirmAction) return;
-    }
-
     try {
-      if (action === 'release') {
-        await releaseSlot(firestore, slotId);
-        toast({ title: 'Slot Released', description: 'The slot is now available.' });
-      } else if (action === 'delete') {
-        await deleteSlot(firestore, slotId);
-        toast({ title: 'Slot Deleted', description: 'The slot has been permanently removed.' });
-      } else if (action === 'assign' && facultyEmpId) {
-        await assignSlot(firestore, slotId, facultyEmpId);
-        toast({ title: 'Slot Assigned', description: 'The slot has been assigned to the selected faculty.' });
-      }
+      await updateSlotSubject(firestore, slotId, newSubjectCode);
+      toast({ title: 'Subject Updated', description: `Slot subject changed to ${newSubjectCode}.` });
     } catch (error: any) {
-      toast({ variant: 'destructive', title: `Error performing ${action}`, description: error.message });
+      toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+    }
+  };
+
+  const handleTeacherChange = async (slotId: string, newTeacherEmpId: string) => {
+    if (!firestore) return;
+    try {
+      await updateSlotTeacher(firestore, slotId, newTeacherEmpId);
+      const teacherName = facultyMap.get(newTeacherEmpId) || 'Unknown';
+      toast({ title: 'Teacher Assigned', description: `Slot assigned to ${teacherName}.` });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Assignment Failed', description: error.message });
+    }
+  };
+  
+  const handleUnassignTeacher = async (slotId: string) => {
+    if (!firestore) return;
+    try {
+        await unassignTeacher(firestore, slotId);
+        toast({ title: 'Teacher Unassigned', description: 'The slot is now available.' });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
     }
   };
 
@@ -168,45 +176,72 @@ export default function AdminDashboardPage() {
           <TabsContent key={`${slotType}-${day}`} value={day}>
             <div className="space-y-2 mt-4">
               {timetable.filter(ts => ts.day === day).map(ts => {
-                // Find the corresponding slot from Firestore
-                const dbSlot = allSlots.find(s => s.courseId === ts.code && new Date(s.slotDatetime).getDay() === (daysOfWeek.indexOf(day) + 1) % 7);
+                const dateForSlot = getNextDateForDay(day);
+                const [startHours, startMinutes] = parseTime(ts.startTime);
+                dateForSlot.setHours(startHours, startMinutes, 0, 0);
+
+                const dbSlot = allSlots.find(s => 
+                    new Date(s.slotDatetime).getTime() === dateForSlot.getTime()
+                );
+                
                 const slotId = dbSlot?.id;
+                const assignedTeacher = dbSlot?.teacherEmpId ? facultyMap.get(dbSlot.teacherEmpId) : null;
 
                 return (
-                  <div key={ts.code + ts.startTime} className="grid grid-cols-1 md:grid-cols-4 items-center p-3 border rounded-lg gap-4">
+                  <div key={ts.code + ts.startTime} className="grid grid-cols-1 md:grid-cols-5 items-center p-3 border rounded-lg gap-4">
                     <div className="md:col-span-1">
                       <p className="font-semibold text-base">{ts.startTime} - {ts.endTime}</p>
-                      <p className="text-sm text-muted-foreground">Code: {ts.code}</p>
+                      <p className="text-sm text-muted-foreground">Original Code: {ts.code}</p>
                     </div>
-                    <div className="md:col-span-1">
-                      <p className={`text-sm font-medium ${dbSlot?.isBooked ? 'text-destructive' : 'text-primary'}`}>
-                        {dbSlot?.isBooked ? `Booked: ${facultyMap.get(dbSlot.bookedBy!) || 'Unknown'}` : 'Available'}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2 flex flex-wrap gap-2 w-full justify-start md:justify-end">
-                      {slotId && dbSlot?.isBooked && (
-                        <Button variant="outline" size="sm" onClick={() => handleAction('release', slotId)} title="Release Slot">
-                          <UserX className="mr-2 h-4 w-4" /> Release
-                        </Button>
-                      )}
-                      {slotId && !dbSlot?.isBooked && (
-                         <Select onValueChange={(empId) => handleAction('assign', slotId, empId)}>
-                            <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
-                                <SelectValue placeholder="Assign to..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {faculties.map(faculty => (
-                                  <SelectItem key={faculty.id} value={faculty.empId}>{faculty.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
-                      )}
-                      {slotId && (
-                        <Button variant="destructive" size="sm" onClick={() => handleAction('delete', slotId)} title="Delete Slot">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </Button>
-                      )}
-                       {!slotId && <p className="text-xs text-muted-foreground self-center">Not in DB</p>}
+                    
+                    <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+                        {/* Subject Selector */}
+                        <div className="flex items-center gap-2">
+                           <Book className="h-4 w-4 text-muted-foreground" />
+                           <Select 
+                             value={dbSlot?.subjectCode} 
+                             onValueChange={(newCode) => slotId && handleSubjectChange(slotId, newCode)}
+                             disabled={!slotId}
+                           >
+                                <SelectTrigger className="w-full sm:w-[150px] h-9 text-xs">
+                                    <SelectValue placeholder="Select Subject..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {allCourseCodes.map(code => (
+                                      <SelectItem key={code} value={code}>{code}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Teacher Selector */}
+                        <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-muted-foreground"/>
+                            <Select 
+                              value={dbSlot?.teacherEmpId || ''} 
+                              onValueChange={(empId) => slotId && handleTeacherChange(slotId, empId)}
+                              disabled={!slotId}
+                            >
+                                <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
+                                    <SelectValue placeholder="Assign Teacher..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {faculties.map(faculty => (
+                                      <SelectItem key={faculty.id} value={faculty.empId}>{faculty.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
+                        {/* Unassign Button */}
+                        <div>
+                        {slotId && dbSlot?.teacherEmpId && (
+                            <Button variant="outline" size="sm" onClick={() => handleUnassignTeacher(slotId)} title="Unassign Teacher">
+                               <UserX className="mr-2 h-4 w-4" /> Unassign
+                            </Button>
+                        )}
+                        {!slotId && <p className="text-xs text-muted-foreground self-center">Slot not in DB</p>}
+                        </div>
                     </div>
                   </div>
                 );
@@ -247,12 +282,12 @@ export default function AdminDashboardPage() {
             <div>
                 <CardTitle>Admin Dashboard</CardTitle>
                 <CardDescription>
-                    Manage all theory and lab slots from here. You have full control.
+                    Manage subjects and teachers for all theory and lab slots.
                 </CardDescription>
             </div>
             <Button onClick={handleSeedDatabase} disabled={isSeeding}>
                 <Database className="mr-2 h-4 w-4" />
-                Seed Database for Week
+                Seed/Verify Week's Slots
             </Button>
         </CardHeader>
         <CardContent>
