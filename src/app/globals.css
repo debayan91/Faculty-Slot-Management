@@ -31,7 +31,7 @@
     --destructive-foreground: 210 40% 98%;
 
     --border: 240 3.7% 15.9%;
-    --input: 224 15% 15%;
+    --input: 240 3.7% 15.9%;
     --ring: 142 76% 46%;
 
     --radius: 0.2rem;
@@ -65,7 +65,7 @@
     --destructive-foreground: 210 40% 98%;
 
     --border: 240 3.7% 15.9%;
-    --input: hsla(224 15% 15% / 0.5);
+    --input: 240 3.7% 15.9%;
     --ring: 142 76% 46%;
   }
 
@@ -97,7 +97,7 @@
     --destructive-foreground: 210 40% 98%;
 
     --border: 240 5.9% 90%;
-    --input: hsla(0 0% 92% / 0.5);
+    --input: 240 5.9% 90%;
     --ring: 142 76% 36%;
   }
 }
@@ -111,12 +111,12 @@
   }
 
   .dark body {
-    background-image: radial-gradient(hsl(var(--accent) / 0.35) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(var(--accent) / 0.5) 1px, transparent 1px);
     background-size: 32px 32px;
   }
   
   html.light body {
-    background-image: radial-gradient(hsl(var(--primary) / 0.25) 1px, transparent 1px);
+    background-image: radial-gradient(hsl(var(--primary) / 0.35) 1px, transparent 1px);
     background-size: 32px 32px;
   }
 }
@@ -124,7 +124,7 @@
 /* Glassmorphism styles */
 @layer components {
   .glass-effect {
-    @apply bg-card backdrop-blur-lg border shadow-lg rounded-sm;
+    @apply bg-card/50 backdrop-blur-lg border shadow-lg rounded-sm;
     box-shadow: 0 0 20px 0 hsla(var(--primary) / 0.3);
   }
 
@@ -138,7 +138,7 @@
   }
 
   .button, .input, .textarea, .select-trigger {
-    @apply glass-effect bg-transparent rounded-sm;
+    @apply glass-effect bg-transparent border-border;
   }
 
   .button:hover:not(:disabled) {
