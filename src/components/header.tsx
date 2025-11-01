@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -13,6 +14,7 @@ import {
   LogIn,
   ShieldCheck,
   ShieldAlert,
+  UserCog,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -141,12 +143,20 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button asChild>
-              <Link href="/login">
-                <LogIn className="mr-2 h-4 w-4" />
-                Login
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline">
+                <Link href="/login">
+                  <UserCog className="mr-2 h-4 w-4" />
+                  Admin Login
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Faculty Login
+                </Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>
