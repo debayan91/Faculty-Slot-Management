@@ -43,7 +43,7 @@ export function Header() {
       await signOut(auth);
       setIsAdmin(false); // Clear admin state on sign out
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
-      router.push("/login");
+      router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -146,16 +146,10 @@ export function Header() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button asChild variant="outline">
-                <Link href="/login">
+              <Button asChild variant="outline" onClick={() => router.push('/admin/auth')}>
+                <Link href="/admin/auth">
                   <UserCog className="mr-2 h-4 w-4" />
-                  Admin Login
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/login">
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Faculty Login
+                  Admin
                 </Link>
               </Button>
             </div>
