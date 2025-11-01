@@ -12,6 +12,7 @@ import {
   User as UserIcon,
   LogIn,
   ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,16 +24,19 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useAdmin } from "@/context/AdminProvider";
 
 export function Header() {
   const auth = useAuth();
   const { user, faculty } = useUser();
   const router = useRouter();
   const { toast } = useToast();
+  const { isAdmin, setIsAdmin } = useAdmin();
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
+      setIsAdmin(false); // Clear admin state on sign out
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
       router.push("/login");
     } catch (error: any) {
@@ -41,6 +45,22 @@ export function Header() {
         title: "Sign Out Failed",
         description: error.message,
       });
+    }
+  };
+
+  const handleAdminToggle = () => {
+    if (isAdmin) {
+      setIsAdmin(false);
+      toast({ title: "Admin Mode Deactivated" });
+    } else {
+      const pass = prompt("Enter admin password:");
+      if (pass === "password1234") {
+        setIsAdmin(true);
+        toast({ title: "Admin Mode Activated" });
+        router.push("/admin");
+      } else if (pass !== null) {
+        toast({ variant: "destructive", title: "Incorrect Password" });
+      }
     }
   };
 
@@ -94,12 +114,26 @@ export function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {faculty?.role === 'admin' && (
+                {isAdmin && (
                   <DropdownMenuItem onClick={() => router.push('/admin')}>
                     <ShieldCheck className="mr-2 h-4 w-4" />
-                    <span>Admin</span>
+                    <span>Admin Dashboard</span>
                   </DropdownMenuItem>
                 )}
+                 <DropdownMenuItem onClick={handleAdminToggle}>
+                  {isAdmin ? (
+                    <>
+                      <ShieldAlert className="mr-2 h-4 w-4" />
+                      <span>Deactivate Admin</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="mr-2 h-4 w-4" />
+                      <span>Activate Admin</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>

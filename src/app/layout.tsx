@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/header";
 import { FirebaseClientProvider } from "@/firebase";
+import { AdminProvider } from "@/context/AdminProvider";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -31,9 +32,11 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
-            <Header />
-            {children}
-            <Toaster />
+            <AdminProvider>
+              <Header />
+              {children}
+              <Toaster />
+            </AdminProvider>
           </FirebaseClientProvider>
         </ThemeProvider>
       </body>

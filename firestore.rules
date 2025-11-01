@@ -8,25 +8,35 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    // Check for admin role via custom claims.
+    function isAdmin() {
+      return request.auth.token.role == 'admin';
+    }
+
     // Allow a user to read and create their own faculty document.
-    // Update and delete are disallowed for now to prevent users from changing their role.
     match /faculties/{userId} {
       allow get, create: if isOwner(userId);
+      // Admins can read/write any faculty profile
+      allow read, write: if isAdmin();
     }
 
     // Slots can be read by any authenticated user.
     match /slots/{slotId} {
       allow read: if request.auth != null;
-      // Allow a user to update a slot only if they are booking it (isBooked: false -> true)
+      
+      // Allow a user to update a slot only if they are booking it
       allow update: if request.auth != null
                     && request.resource.data.isBooked == true
                     && request.resource.data.bookedBy != null
                     && resource.data.isBooked == false;
+      
+      // Admins have full read/write access to all slots.
+      allow read, write: if isAdmin();
     }
 
     // Activity logs are for admins, so we restrict access for now.
     match /activity_logs/{logId} {
-      allow read, write: if false; // Admin-only access will be added
+      allow read, write: if isAdmin();
     }
   }
 }
