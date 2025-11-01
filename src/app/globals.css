@@ -30,11 +30,11 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 142 76% 26%; /* Greenish border */
+    --border: 240 3.7% 15.9%;
     --input: 224 15% 15%;
     --ring: 142 76% 46%;
 
-    --radius: 0rem;
+    --radius: 0.2rem;
   }
 
   .dark {
@@ -64,7 +64,7 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 142 76% 26%; /* Greenish border */
+    --border: 240 3.7% 15.9%;
     --input: hsla(224 15% 15% / 0.5);
     --ring: 142 76% 46%;
   }
@@ -96,7 +96,7 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 142 76% 30%;
+    --border: 240 5.9% 90%;
     --input: hsla(0 0% 92% / 0.5);
     --ring: 142 76% 36%;
   }
@@ -124,7 +124,7 @@
 /* Glassmorphism styles */
 @layer components {
   .glass-effect {
-    @apply bg-card backdrop-blur-lg border shadow-lg;
+    @apply bg-card backdrop-blur-lg border shadow-lg rounded-sm;
     box-shadow: 0 0 20px 0 hsla(var(--primary) / 0.3);
   }
 
@@ -138,7 +138,7 @@
   }
 
   .button, .input, .textarea, .select-trigger {
-    @apply glass-effect bg-transparent;
+    @apply glass-effect bg-transparent rounded-sm;
   }
 
   .button:hover:not(:disabled) {
@@ -146,7 +146,7 @@
   }
 
   .tabs-list {
-    @apply bg-transparent backdrop-blur-sm border;
+    @apply bg-transparent backdrop-blur-sm border rounded-sm;
   }
   
   .tabs-trigger[data-state=active] {
@@ -156,7 +156,7 @@
 
 
 .google-signin-button {
-    @apply flex items-center justify-center w-full bg-white text-gray-700 border border-border shadow-sm px-4 py-2 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
+    @apply flex items-center justify-center w-full bg-white text-gray-700 border border-border shadow-sm px-4 py-2 text-sm font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-sm;
 }
 
 .google-icon {
@@ -188,7 +188,7 @@
 }
 
 .course-card {
-  @apply border p-4 text-left transition-colors hover:bg-muted/30;
+  @apply border p-4 text-left transition-colors hover:bg-muted/30 rounded-sm;
 }
 
 .section-divider {
