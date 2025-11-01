@@ -155,9 +155,14 @@ export default function AdminDashboardPage() {
   const handleTeacherChange = async (slotId: string, newTeacherEmpId: string) => {
     if (!firestore) return;
     try {
-      await updateSlotTeacher(firestore, slotId, newTeacherEmpId);
-      const teacherName = facultyMap.get(newTeacherEmpId) || 'Unknown';
-      toast({ title: 'Teacher Assigned', description: `Slot assigned to ${teacherName}.` });
+      if (newTeacherEmpId === 'UNASSIGNED') {
+        await unassignTeacher(firestore, slotId);
+        toast({ title: 'Teacher Unassigned', description: 'The slot is now available.' });
+      } else {
+        await updateSlotTeacher(firestore, slotId, newTeacherEmpId);
+        const teacherName = facultyMap.get(newTeacherEmpId) || 'Unknown';
+        toast({ title: 'Teacher Assigned', description: `Slot assigned to ${teacherName}.` });
+      }
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Assignment Failed', description: error.message });
     }
@@ -231,7 +236,7 @@ export default function AdminDashboardPage() {
                         <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground"/>
                             <Select 
-                              value={dbSlot?.teacherEmpId || ''} 
+                              value={dbSlot?.teacherEmpId || 'UNASSIGNED'} 
                               onValueChange={(empId) => slotId && handleTeacherChange(slotId, empId)}
                               disabled={!slotId}
                             >
@@ -239,7 +244,7 @@ export default function AdminDashboardPage() {
                                     <SelectValue placeholder="Assign Teacher..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Unassigned</SelectItem>
+                                    <SelectItem value="UNASSIGNED">Unassigned</SelectItem>
                                     {faculties.map(faculty => (
                                       <SelectItem key={faculty.id} value={faculty.empId}>{faculty.name}</SelectItem>
                                     ))}
