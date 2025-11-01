@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 
 export interface Faculty extends DocumentData {
+  id: string; // Add id to the interface
   empId: string;
   userId?: string; // Is on the document, but not required for creation
   name: string;
@@ -39,7 +40,7 @@ export async function getFacultyProfile(db: Firestore, userId: string): Promise<
     }
 }
 
-export async function createFacultyProfile(db: Firestore, userId: string, data: Omit<Faculty, 'userId'>) {
+export async function createFacultyProfile(db: Firestore, userId: string, data: Omit<Faculty, 'userId' | 'id'>) {
     const facultyRef = doc(db, 'faculties', userId);
     const facultySnap = await getDoc(facultyRef);
 
