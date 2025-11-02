@@ -8,4 +8,19 @@ export const MOCK_COURSES: Course[] = [
   { id: "C3", name: "AI in the Classroom", description: "Integrating generative AI responsibly." }
 ];
 
-// MOCK_SLOTS is no longer needed as we will fetch from Firestore.
+// This is an example of what the schedule templates might look like in Firestore.
+// You should seed your database with these templates.
+export const MOCK_SCHEDULE_TEMPLATES = {
+  monday: {
+    day: "Monday",
+    slots: [
+      { startTime: "09:00", duration: 50 },
+      { startTime: "10:00", duration: 50 },
+      { startTime: "11:00", duration: 50 },
+      { startTime: "12:00", duration: 50 },
+      { startTime: "14:00", duration: 50 },
+      { startTime: "15:00", duration: 50 },
+    ]
+  },
+  // You can add templates for Tuesday, Wednesday, etc.
+};

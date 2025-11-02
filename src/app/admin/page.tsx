@@ -5,9 +5,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/context/AdminProvider';
 import { useFirestore } from '@/firebase';
-import { useCollection, useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, doc, writeBatch, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
-import type { Faculty, Slot } from '@/lib/types';
+import { useCollection } from 'react-firebase-hooks/firestore';
+import { collection, query, where, Timestamp } from 'firebase/firestore';
+import type { Slot } from '@/lib/types';
+import { format, startOfDay, isSameDay } from 'date-fns';
 import {
   Card,
   CardContent,
@@ -15,56 +16,63 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, UserX, Book, User, Database } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Loader2, Calendar as CalendarIcon, Trash2, Wand2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { unassignTeacher, updateSlotSubject, updateSlotTeacher } from '@/firebase/firestore/admin';
-import { theoryClasses, labClasses } from '@/lib/timetable';
+import { deleteScheduleForDate, generateScheduleForDate, updateSlot } from '@/firebase/firestore/admin';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
-type TimetableSlot = {
-  code: string;
-  day: string;
-  startTime: string;
-  endTime: string;
-};
-
-const getNextDateForDay = (dayOfWeek: string): Date => {
-  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const targetDayIndex = days.findIndex(d => d.toLowerCase() === dayOfWeek.toLowerCase());
-  if (targetDayIndex === -1) throw new Error("Invalid day of week");
-
-  const now = new Date();
-  const todayIndex = now.getDay();
+const EditableCell = ({ slotId, field, value, onSave }: { slotId: string, field: keyof Slot, value: string | null, onSave: (slotId: string, field: keyof Slot, value: string) => void }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentValue, setCurrentValue] = useState(value);
   
-  let dayDifference = targetDayIndex - todayIndex;
+    const handleSave = () => {
+      onSave(slotId, field, currentValue || '');
+      setIsEditing(false);
+    };
   
-  if (dayDifference < 0 || (dayDifference === 0 && now.getHours() >= 23)) {
-    dayDifference += 7;
-  }
-  
-  const targetDate = new Date(now);
-  targetDate.setDate(now.getDate() + dayDifference);
-  return targetDate;
-};
-
-const parseTime = (timeStr: string): [number, number] => {
-    const [time, modifier] = timeStr.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
-    if (modifier === 'PM' && hours < 12) {
-        hours += 12;
+    if (isEditing) {
+      return (
+        <div className="flex gap-1">
+          <Input 
+            value={currentValue || ''}
+            onChange={(e) => setCurrentValue(e.target.value)}
+            className="h-8"
+          />
+          <Button size="sm" onClick={handleSave} className='h-8'>Save</Button>
+          <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className='h-8'>Cancel</Button>
+        </div>
+      );
     }
-    if (modifier === 'AM' && hours === 12) { // Midnight case
-        hours = 0;
-    }
-    return [hours, minutes || 0];
+  
+    return (
+      <div onClick={() => setIsEditing(true)} className="min-h-[2rem] cursor-pointer">
+        {value || <span className="text-muted-foreground">Empty</span>}
+      </div>
+    );
 };
 
 export default function AdminDashboardPage() {
@@ -73,266 +81,213 @@ export default function AdminDashboardPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [slotsData, slotsLoading] = useCollection(firestore ? collection(firestore, 'slots') : null);
-  const [facultiesData, facultiesLoading] = useCollectionData(firestore ? collection(firestore, 'faculties'): null);
-  
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  const allCourseCodes = useMemo(() => [...new Set([...theoryClasses, ...labClasses].map(c => c.code))], []);
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [isLoading, setIsLoading] = useState(false);
+
+  const slotsQuery = useMemo(() => {
+    if (!firestore || !date) return null;
+    const start = startOfDay(date);
+    const end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+    
+    return query(
+      collection(firestore, 'slots'),
+      where('slot_datetime', '>=', Timestamp.fromDate(start)),
+      where('slot_datetime', '<=', Timestamp.fromDate(end))
+    );
+  }, [firestore, date]);
+
+  const [slotsSnapshot, slotsLoading, slotsError] = useCollection(slotsQuery);
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
       router.push('/');
     }
   }, [isAdmin, adminLoading, router]);
-  
-  const allSlots: Slot[] = useMemo(() =>
-      slotsData ? (slotsData.docs.map(doc => ({ id: doc.id, ...doc.data() } as Slot))) : [],
-    [slotsData]
-  );
 
-  const faculties = useMemo(() => (facultiesData as Faculty[]) || [], [facultiesData]);
-  const facultyMap = useMemo(() => {
-    const map = new Map<string, string>();
-    faculties.forEach(f => map.set(f.empId, f.name));
-    return map;
-  }, [faculties]);
+  const slots: Slot[] = useMemo(() => {
+    if (!slotsSnapshot) return [];
+    return slotsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
+        .sort((a, b) => (a.slot_datetime as any).toMillis() - (b.slot_datetime as any).toMillis());
+  }, [slotsSnapshot]);
 
-  const handleSeedDatabase = async () => {
-    if (!firestore) return;
-    const confirmSeed = confirm("Are you sure you want to seed the database? This will create slots for the entire upcoming week based on the timetable. This action avoids creating duplicates.");
-    if (!confirmSeed) return;
-
-    setIsSeeding(true);
-    toast({ title: 'Seeding database...', description: 'Please wait.' });
+  const handleGenerateSchedule = async () => {
+    if (!firestore || !date) return;
+    
+    setIsLoading(true);
+    toast({ title: 'Generating Schedule...', description: `Creating slots for ${date.toLocaleDateString()}`});
 
     try {
-        const batch = writeBatch(firestore);
-        const allTimetableSlots = [...theoryClasses, ...labClasses];
-        let createdCount = 0;
-
-        for (const timetableSlot of allTimetableSlots) {
-            const date = getNextDateForDay(timetableSlot.day);
-            const [startHours, startMinutes] = parseTime(timetableSlot.startTime);
-            date.setHours(startHours, startMinutes, 0, 0);
-            
-            const slotDatetime = date.toISOString();
-
-            // Check for existing slot to avoid duplicates
-             const q = query(collection(firestore, 'slots'), 
-                where('slotDatetime', '==', slotDatetime), 
-                where('subjectCode', '==', timetableSlot.code)
-             );
-             const existingSlots = await getDocs(q);
- 
-             if (existingSlots.empty) {
-                const newSlotRef = doc(collection(firestore, 'slots'));
-                batch.set(newSlotRef, {
-                    subjectCode: timetableSlot.code,
-                    slotDatetime: slotDatetime,
-                    durationMinutes: 50,
-                    teacherEmpId: null,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp(),
-                });
-                createdCount++;
-             }
-        }
-
-        await batch.commit();
-        toast({ title: 'Database Seeded', description: `${createdCount} new slots created. The timetable is now in sync.` });
+      await generateScheduleForDate(firestore, date);
+      toast({ title: 'Schedule Generated!', description: 'Slots have been created successfully.', variant: 'default' });
     } catch (error: any) {
-        console.error("Error seeding database:", error);
-        toast({ variant: 'destructive', title: 'Seeding Failed', description: error.message });
+      console.error("Error generating schedule:", error);
+      toast({ variant: 'destructive', title: 'Generation Failed', description: error.message });
     } finally {
-        setIsSeeding(false);
-    }
-  };
-  
-  const handleSubjectChange = async (slotId: string, newSubjectCode: string) => {
-    if (!firestore) return;
-    try {
-      await updateSlotSubject(firestore, slotId, newSubjectCode);
-      toast({ title: 'Subject Updated', description: `Slot subject changed to ${newSubjectCode}.` });
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+      setIsLoading(false);
     }
   };
 
-  const handleTeacherChange = async (slotId: string, newTeacherEmpId: string) => {
-    if (!firestore) return;
+  const handleDeleteSchedule = async () => {
+    if (!firestore || !date) return;
+
+    setIsLoading(true);
+    toast({ title: 'Deleting Schedule...', description: `Removing all slots for ${date.toLocaleDateString()}`});
+
     try {
-      if (newTeacherEmpId === 'UNASSIGNED') {
-        await unassignTeacher(firestore, slotId);
-        toast({ title: 'Teacher Unassigned', description: 'The slot is now available.' });
-      } else {
-        await updateSlotTeacher(firestore, slotId, newTeacherEmpId);
-        const teacherName = facultyMap.get(newTeacherEmpId) || 'Unknown';
-        toast({ title: 'Teacher Assigned', description: `Slot assigned to ${teacherName}.` });
-      }
-    } catch (error: any) {
-      toast({ variant: 'destructive', title: 'Assignment Failed', description: error.message });
+        await deleteScheduleForDate(firestore, date);
+        toast({ title: 'Schedule Deleted', description: 'All slots for the selected day have been removed.' });
+    } catch(error: any) {
+        console.error("Error deleting schedule:", error);
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
+    } finally {
+        setIsLoading(false);
     }
   };
-  
-  const handleUnassignTeacher = async (slotId: string) => {
+
+  const handleUpdate = async (slotId: string, field: keyof Slot, value: any) => {
     if (!firestore) return;
     try {
-        await unassignTeacher(firestore, slotId);
-        toast({ title: 'Teacher Unassigned', description: 'The slot is now available.' });
+        await updateSlot(firestore, slotId, { [field]: value });
+        toast({ title: 'Slot Updated', description: `The ${field.replace('_', ' ')} has been changed.` });
     } catch (error: any) {
+        console.error("Error updating slot:", error);
         toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
     }
   };
 
-  const renderTimetable = (timetable: TimetableSlot[], slotType: 'Theory' | 'Lab') => {
-    return (
-      <Tabs defaultValue={daysOfWeek[0]} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1">
-          {daysOfWeek.map(day => (
-            <TabsTrigger key={`${slotType}-${day}`} value={day}>{day}</TabsTrigger>
-          ))}
-        </TabsList>
-        {daysOfWeek.map(day => (
-          <TabsContent key={`${slotType}-${day}`} value={day}>
-            <div className="space-y-2 mt-4">
-              {timetable.filter(ts => ts.day === day).map(ts => {
-                const dateForSlot = getNextDateForDay(day);
-                const [startHours, startMinutes] = parseTime(ts.startTime);
-                dateForSlot.setHours(startHours, startMinutes, 0, 0);
-
-                const dbSlot = allSlots.find(s => {
-                    if (!s.slotDatetime) return false;
-                    const slotDate = new Date(s.slotDatetime);
-                    // Match by date parts and time, ignoring seconds/ms, to account for timezone differences
-                    return slotDate.getFullYear() === dateForSlot.getFullYear() &&
-                           slotDate.getMonth() === dateForSlot.getMonth() &&
-                           slotDate.getDate() === dateForSlot.getDate() &&
-                           slotDate.getHours() === dateForSlot.getHours() &&
-                           slotDate.getMinutes() === dateForSlot.getMinutes() &&
-                           s.subjectCode === ts.code;
-                });
-                
-                const slotId = dbSlot?.id;
-                
-                return (
-                  <div key={ts.code + ts.startTime} className="grid grid-cols-1 md:grid-cols-5 items-center p-3 border rounded-lg gap-4">
-                    <div className="md:col-span-1">
-                      <p className="font-semibold text-base">{ts.startTime} - {ts.endTime}</p>
-                      <p className="text-sm text-muted-foreground">Original Code: {ts.code}</p>
-                    </div>
-                    
-                    <div className="md:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
-                        {/* Subject Selector */}
-                        <div className="flex items-center gap-2">
-                           <Book className="h-4 w-4 text-muted-foreground" />
-                           <Select 
-                             value={dbSlot?.subjectCode} 
-                             onValueChange={(newCode) => slotId && handleSubjectChange(slotId, newCode)}
-                             disabled={!slotId}
-                           >
-                                <SelectTrigger className="w-full sm:w-[150px] h-9 text-xs">
-                                    <SelectValue placeholder="Select Subject..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {allCourseCodes.map(code => (
-                                      <SelectItem key={code} value={code}>{code}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {/* Teacher Selector */}
-                        <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground"/>
-                            <Select 
-                              value={dbSlot?.teacherEmpId || 'UNASSIGNED'} 
-                              onValueChange={(empId) => slotId && handleTeacherChange(slotId, empId)}
-                              disabled={!slotId}
-                            >
-                                <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
-                                    <SelectValue placeholder="Assign Teacher..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="UNASSIGNED">Unassigned</SelectItem>
-                                    {faculties.map(faculty => (
-                                      <SelectItem key={faculty.id} value={faculty.empId}>{faculty.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        
-                        {/* Unassign Button */}
-                        <div>
-                        {slotId && dbSlot?.teacherEmpId && (
-                            <Button variant="outline" size="sm" onClick={() => handleUnassignTeacher(slotId)} title="Unassign Teacher">
-                               <UserX className="mr-2 h-4 w-4" /> Unassign
-                            </Button>
-                        )}
-                        {!slotId && <p className="text-xs text-destructive self-center">Slot not in DB</p>}
-                        </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
-    )
-  };
-    
-  const loading = adminLoading || slotsLoading || facultiesLoading || isSeeding;
-
-  if (loading && !isSeeding) {
+  if (adminLoading) {
     return (
       <div className="flex items-center justify-center h-screen -mt-24">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-  
+
   if (!isAdmin) {
     return null; // Redirect is handled by useEffect
   }
 
   return (
     <div className="container mx-auto p-4 md:p-8">
-       {isSeeding && (
-        <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50 rounded-lg">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="text-lg font-medium">Seeding Database...</p>
-            <p className="text-sm text-muted-foreground">This may take a moment.</p>
-          </div>
-        </div>
-      )}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-                <CardTitle>Admin Dashboard</CardTitle>
+                <CardTitle>Schedule CMS</CardTitle>
                 <CardDescription>
-                    Manage subjects and teachers for all theory and lab slots.
+                    Generate, view, and manage daily schedules.
                 </CardDescription>
             </div>
-            <Button onClick={handleSeedDatabase} disabled={isSeeding}>
-                <Database className="mr-2 h-4 w-4" />
-                Seed/Verify Week's Slots
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className="w-full sm:w-[280px] justify-start text-left font-normal"
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+
+                <Button onClick={handleGenerateSchedule} disabled={isLoading || (slots && slots.length > 0)} className="w-full sm:w-auto">
+                    <Wand2 className="mr-2 h-4 w-4" /> Generate
+                </Button>
+
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={isLoading || !slots || slots.length === 0} className="w-full sm:w-auto">
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete all {slots.length} slots for {date?.toLocaleDateString()}. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteSchedule}>Continue</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+            </div>
         </CardHeader>
         <CardContent>
-            <Tabs defaultValue="theory" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="theory">Theory Timetable</TabsTrigger>
-                    <TabsTrigger value="lab">Lab Timetable</TabsTrigger>
-                </TabsList>
-                <TabsContent value="theory" className="mt-4">
-                  {renderTimetable(theoryClasses, 'Theory')}
-                </TabsContent>
-                <TabsContent value="lab" className="mt-4">
-                  {renderTimetable(labClasses, 'Lab')}
-                </TabsContent>
-            </Tabs>
+            {slotsLoading && (
+                <div className="flex items-center justify-center h-64">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            )}
+            {!slotsLoading && slots.length === 0 && (
+                 <div className="text-center py-16">
+                    <h3 className="text-xl font-semibold">No Schedule Found</h3>
+                    <p className="text-muted-foreground mt-2">
+                        There is no schedule generated for {date?.toLocaleDateString()}.<br/>
+                        Click the "Generate" button to create one from the daily template.
+                    </p>
+                 </div>
+            )}
+            {!slotsLoading && slots.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Time</TableHead>
+                    <TableHead>Course Name</TableHead>
+                    <TableHead>Assigned Faculty</TableHead>
+                    <TableHead>Room</TableHead>
+                    <TableHead className="w-[100px]">Bookable</TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {slots.map((slot) => (
+                    <TableRow key={slot.id}>
+                      <TableCell className="font-medium">
+                        {format(new Date((slot.slot_datetime as any).toDate()), 'p')}
+                      </TableCell>
+                      <TableCell>
+                        <EditableCell slotId={slot.id} field="course_name" value={slot.course_name} onSave={handleUpdate} />
+                      </TableCell>
+                      <TableCell>
+                        <EditableCell slotId={slot.id} field="faculty_name" value={slot.faculty_name} onSave={handleUpdate} />
+                      </TableCell>
+                       <TableCell>
+                        <EditableCell slotId={slot.id} field="room_number" value={slot.room_number} onSave={handleUpdate} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                            <Switch
+                                id={`bookable-${slot.id}`}
+                                checked={slot.is_bookable}
+                                onCheckedChange={(value) => handleUpdate(slot.id, 'is_bookable', value)}
+                            />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {slot.is_booked ? 
+                            <span className="flex items-center text-green-500"><CheckCircle className="mr-2 h-4 w-4"/> Booked</span> : 
+                            <span className="flex items-center text-yellow-500"><AlertTriangle className="mr-2 h-4 w-4"/> Open</span>
+                        }
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
         </CardContent>
       </Card>
     </div>

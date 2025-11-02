@@ -37,58 +37,73 @@
     },
     "Slot": {
       "title": "Slot",
-      "description": "Represents a persistent time slot in the timetable.",
+      "description": "Represents a single, specific time slot for a given day.",
       "type": "object",
       "properties": {
-        "slotDatetime": {
+        "slot_datetime": {
           "type": "string",
           "format": "date-time",
-          "description": "The start date and time of the slot."
+          "description": "A timestamp representing the exact start date and time of the slot."
         },
-        "durationMinutes": {
+        "duration_minutes": {
           "type": "number",
           "description": "The duration of the slot in minutes."
         },
-        "subjectCode": {
-          "type": "string",
-          "description": "The subject code associated with this slot (e.g., 'A1', 'L32')."
-        },
-        "teacherEmpId": {
+        "course_name": {
           "type": ["string", "null"],
-          "description": "The empId of the faculty member assigned to this slot. Null if unassigned."
+          "description": "The name of the course or event for this slot (e.g., 'Physics 101')."
         },
-        "updatedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The last time the slot was updated."
+        "faculty_name": {
+          "type": ["string", "null"],
+          "description": "The name of the faculty member assigned by the admin."
+        },
+        "room_number": {
+          "type": ["string", "null"],
+          "description": "The room number for this slot (e.g., '303B')."
+        },
+        "is_bookable": {
+          "type": "boolean",
+          "description": "Whether this slot can be booked by a faculty member. Set by an admin."
+        },
+        "is_booked": {
+          "type": "boolean",
+          "description": "Whether this slot has been booked by a faculty member."
+        },
+        "booked_by": {
+          "type": ["string", "null"],
+          "description": "The empId of the faculty member who booked the slot. Null if not booked."
         }
       },
-      "required": ["slotDatetime", "durationMinutes", "subjectCode"]
+      "required": ["slot_datetime", "duration_minutes", "is_bookable", "is_booked"]
     },
-    "ActivityLog": {
-      "title": "Activity Log",
-      "description": "Logs actions performed by users in the system.",
+    "ScheduleTemplate": {
+      "title": "Schedule Template",
+      "description": "A template defining the structure of a day's schedule.",
       "type": "object",
       "properties": {
-        "action": {
+        "day": {
           "type": "string",
-          "description": "The action that was performed (e.g., 'assign_teacher', 'change_subject')."
+          "description": "The day of the week (e.g., 'monday')."
         },
-        "performedBy": {
-          "type": "string",
-          "description": "The empId of the user who performed the action."
-        },
-        "timestamp": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the action was performed."
-        },
-        "details": {
-          "type": "object",
-          "description": "A JSON object containing details about the action."
+        "slots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "startTime": {
+                "type": "string",
+                "description": "The start time in HH:mm format (e.g., '09:00')."
+              },
+              "duration": {
+                "type": "number",
+                "description": "Duration of the slot in minutes."
+              }
+            },
+            "required": ["startTime", "duration"]
+          }
         }
       },
-      "required": ["action", "performedBy", "timestamp"]
+      "required": ["day", "slots"]
     }
   },
   "auth": {
@@ -101,11 +116,11 @@
     },
     "/slots/{slotId}": {
       "schema": { "$ref": "#/entities/Slot" },
-      "description": "Stores all persistent time slots."
+      "description": "Stores every single slot for every single day."
     },
-    "/activity_logs/{logId}": {
-      "schema": { "$ref": "#/entities/ActivityLog" },
-      "description": "Stores an audit trail of all actions."
+    "/schedule_templates/{day}": {
+      "schema": { "$ref": "#/entities/ScheduleTemplate" },
+      "description": "Stores the fixed schedule templates for each day of the week."
     }
   }
 }
