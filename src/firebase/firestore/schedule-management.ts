@@ -15,11 +15,6 @@ import {
 } from 'firebase/firestore';
 import { parse } from 'date-fns';
 import type { Slot, ScheduleTemplate } from '@/lib/types';
-import { theoryClasses, labClasses } from '@/lib/timetable';
-
-function parseTime(timeStr: string) {
-    return parse(timeStr, 'h:mm a', new Date());
-}
 
 /**
  * Generates and saves a full day's schedule to the 'slots' collection
@@ -69,7 +64,7 @@ export async function generateScheduleForDate(db: Firestore, date: Date) {
     const newSlot: Omit<Slot, 'id'> = {
       slot_datetime: Timestamp.fromDate(slotDateTime),
       duration_minutes: templateSlot.duration,
-      slot_code: templateSlot.slot_code,
+      slot_code: templateSlot.slot_code, // This was the missing field
       course_name: null, 
       faculty_name: null,
       room_number: null,
@@ -125,5 +120,3 @@ export async function updateSlot(db: Firestore, slotId: string, newData: Partial
   const slotRef = doc(db, 'slots', slotId);
   await updateDoc(slotRef, newData);
 }
-
-    
