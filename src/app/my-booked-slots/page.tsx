@@ -35,8 +35,9 @@ const SlotCard = ({ slot }: { slot: Slot }) => {
   return (
     <div className="border p-4 rounded-lg flex justify-between items-center">
       <div>
-        <p className="font-semibold text-lg">{slot.course_name}</p>
+        <p className="font-semibold text-lg">{slot.course_name || <span className="text-muted-foreground italic">Unnamed Slot</span>}</p>
         <p className="text-muted-foreground">
+          <span className="font-mono text-xs mr-2">{slot.slot_code}</span>
           {format(new Date((slot.slot_datetime as any).toDate()), 'eeee, MMMM do, yyyy @ p')}
         </p>
         {slot.room_number && <p className="text-sm">Room: {slot.room_number}</p>}
@@ -50,7 +51,6 @@ const SlotCard = ({ slot }: { slot: Slot }) => {
 export default function MyBookedSlotsPage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
   
   const slotsQuery = useMemo(() => {
     if (!firestore || !user?.uid) return null;
@@ -64,7 +64,9 @@ export default function MyBookedSlotsPage() {
 
   const bookedSlots: Slot[] = useMemo(() => {
     if (!slotsSnapshot) return [];
-    return slotsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Slot));
+    return slotsSnapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
+      .sort((a, b) => (a.slot_datetime as any).toMillis() - (b.slot_datetime as any).toMillis());
   }, [slotsSnapshot]);
 
   if (userLoading || slotsLoading) {
@@ -121,7 +123,3 @@ export default function MyBookedSlotsPage() {
     </div>
   );
 }
-
-    
-
-    

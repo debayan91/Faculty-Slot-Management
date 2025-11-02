@@ -19,8 +19,9 @@ function SlotCard({ slot, onBook, isBookedByOther, facultyName }: { slot: Slot, 
     return (
         <div className="course-card flex flex-col sm:flex-row justify-between sm:items-center p-4">
             <div>
-                <h3 className="font-medium-theme text-lg text-normal">{slot.course_name}</h3>
+                 <h3 className="font-medium-theme text-lg text-normal">{slot.course_name || <span className="text-muted-foreground italic">Unnamed Slot</span>}</h3>
                 <p className="text-light text-sm mt-1">
+                    <span className="font-mono text-xs text-muted-foreground mr-2">{slot.slot_code}</span>
                     {format(new Date((slot.slot_datetime as any).toDate()), 'p')}
                     {slot.room_number && ` - Room: ${slot.room_number}`}
                 </p>
@@ -47,8 +48,8 @@ export default function CourseRegistration() {
 
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
-  const [view, setView] = useState<'list' | 'confirmation'>('list');
 
+  // This query is now aligned with the admin page's query for consistency
   const slotsQuery = useMemo(() => {
     if (!firestore || !date) return null;
     const start = startOfDay(date);
@@ -64,6 +65,7 @@ export default function CourseRegistration() {
 
   const [slotsSnapshot, slotsLoading, slotsError] = useCollection(slotsQuery);
 
+  // This performs the client-side filtering as per your suggestion
   const availableSlots: Slot[] = useMemo(() => {
     if (!slotsSnapshot) return [];
     return slotsSnapshot.docs
@@ -75,7 +77,8 @@ export default function CourseRegistration() {
   useEffect(() => {
     if(slotsError) {
       console.error("Error fetching available slots:", slotsError);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots. You may need to create a Firestore index.' });
+      // This toast is helpful for debugging index issues.
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots. An index might be required.' });
     }
   }, [slotsError, toast]);
 
@@ -87,14 +90,13 @@ export default function CourseRegistration() {
     }
     const formattedTime = format(new Date((slot.slot_datetime as any).toDate()), 'p');
     const isConfirmed = confirm(
-      `Confirm booking for ${slot.course_name} at ${formattedTime}?`
+      `Confirm booking for ${slot.course_name || 'this slot'} at ${formattedTime}?`
     );
     if (isConfirmed) {
       setIsLoading(true);
       try {
         await bookSlot(firestore, slot.id, user.uid, faculty.name);
         toast({ title: 'Slot Booked!', description: `You have successfully booked ${slot.course_name}.` });
-        // No need to manually update state, useCollection will do it automatically
       } catch (error: any)
       {
         console.error("Failed to book slot:", error);
@@ -105,9 +107,7 @@ export default function CourseRegistration() {
     }
   };
 
-  const loading = userLoading;
-
-  if (loading) {
+  if (userLoading) {
     return (
       <div className="flex items-center justify-center h-screen -mt-24">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -123,28 +123,6 @@ export default function CourseRegistration() {
           <p className="sub-heading">Please <Link href="/" className="underline text-primary">log in</Link> to view and book course slots.</p>
         </div>
       </div>
-    )
-  }
-  
-  if (view === 'confirmation') {
-    return (
-        <div className="card-container w-full max-w-2xl mx-auto text-center">
-            <div className="flex justify-center mb-5">
-                <CheckCircle className="w-20 h-20 text-primary" />
-            </div>
-            <h2 className="section-heading !text-center">Registration Confirmed!</h2>
-            <p className="sub-heading !text-center !mb-1">Thank you, <span className="font-medium-theme text-normal">{faculty?.name}</span>.</p>
-            <p className="text-sm mb-6 text-light">A confirmation email has been *simulated* to <span className="font-medium-theme text-light">{user?.email}</span>.</p>
-
-            <div className="flex justify-center gap-4">
-                <Button onClick={() => {
-                    setView('list');
-                }} className="supabase-button">Book Another Slot</Button>
-                <Button asChild variant="outline">
-                    <Link href="/my-booked-slots">View My Bookings</Link>
-                </Button>
-            </div>
-        </div>
     )
   }
 

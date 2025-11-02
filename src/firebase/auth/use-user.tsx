@@ -37,7 +37,7 @@ export function useUser() {
           const facultyProfile = await getFacultyProfile(firestore, user.uid);
           setUserState({ user, faculty: facultyProfile, loading: false });
         } catch (error) {
-          console.error("Failed to fetch faculty profile:", error);
+          console.error("[useUser] Failed to fetch faculty profile:", error);
           // Still set loading to false, but profile will be null
           setUserState({ user, faculty: null, loading: false });
         }
