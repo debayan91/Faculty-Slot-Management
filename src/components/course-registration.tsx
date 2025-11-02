@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, CheckCircle, Loader2 } from "lucide-react";
 import { useFirestore, useUser } from "@/firebase";
 import Link from "next/link";
-import { collection, query, where, Timestamp, getDocs } from "firebase/firestore";
+import { collection, query, where, Timestamp, getDocs, orderBy } from "firebase/firestore";
 import { bookSlot } from "@/firebase/firestore/slot-booking";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -59,25 +59,27 @@ export default function CourseRegistration() {
     const fetchSlots = async () => {
         setSlotsLoading(true);
         try {
-            const start = startOfDay(date);
-            const end = endOfDay(date);
-            
             const q = query(
                 collection(firestore, 'slots'),
-                where('slot_datetime', '>=', Timestamp.fromDate(start)),
-                where('slot_datetime', '<=', Timestamp.fromDate(end)),
-                where('is_bookable', '==', true)
+                where('is_bookable', '==', true),
+                orderBy('slot_datetime', 'asc')
               );
             
             const querySnapshot = await getDocs(q);
+            const start = startOfDay(date);
+            const end = endOfDay(date);
+
             const slots = querySnapshot.docs
                 .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
-                .sort((a, b) => (a.slot_datetime as any).toMillis() - (b.slot_datetime as any).toMillis());
+                .filter(slot => {
+                    const slotDate = (slot.slot_datetime as any).toDate();
+                    return isWithinInterval(slotDate, { start, end });
+                });
             
             setAvailableSlots(slots);
         } catch (error) {
             console.error("Error fetching available slots:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots.' });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots. You may need to create a Firestore index.' });
             setAvailableSlots([]);
         } finally {
             setSlotsLoading(false);
@@ -101,9 +103,8 @@ export default function CourseRegistration() {
       try {
         await bookSlot(firestore, slot.id, user.uid, faculty.name);
         toast({ title: 'Slot Booked!', description: `You have successfully booked ${slot.course_name}.` });
-        setView('confirmation');
         // Manually update the state to reflect the booking
-        setAvailableSlots(prevSlots => prevSlots.map(s => s.id === slot.id ? {...s, is_booked: true, faculty_name: faculty.name } : s));
+        setAvailableSlots(prevSlots => prevSlots.map(s => s.id === slot.id ? {...s, is_booked: true, booked_by: user.uid, faculty_name: faculty.name } : s));
 
       } catch (error: any)
       {
