@@ -28,14 +28,14 @@ export interface ScheduleTemplate {
 // Represents a specific, final slot document in the main 'slots' collection
 export interface Slot {
   id: string; // The document ID from Firestore
-  slot_datetime: string | Date; // Should be treated as a Date object
+  slot_datetime: any; // Firestore Timestamp object - use .toDate()
   duration_minutes: number;
   course_name: string | null;
   faculty_name: string | null;
   room_number: string | null;
   is_bookable: boolean;
   is_booked: boolean;
-  booked_by: string | null; // The empId of the faculty who booked it
+  booked_by: string | null; // The faculty's user ID (uid)
 }
 
     

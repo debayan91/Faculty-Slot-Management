@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 
 // This function is for a FACULTY member to book an available slot
-export async function bookSlot(db: Firestore, slotId: string, facultyEmpId: string, facultyName: string) {
+export async function bookSlot(db: Firestore, slotId: string, facultyUserId: string, facultyName: string) {
   const slotRef = doc(db, 'slots', slotId);
 
   try {
@@ -29,7 +29,7 @@ export async function bookSlot(db: Firestore, slotId: string, facultyEmpId: stri
 
       transaction.update(slotRef, {
         is_booked: true,
-        booked_by: facultyEmpId,
+        booked_by: facultyUserId, // Use the unique User ID
         faculty_name: facultyName, // Also store the name for easier display
       });
     });
@@ -40,7 +40,7 @@ export async function bookSlot(db: Firestore, slotId: string, facultyEmpId: stri
 }
 
 // This function is for a FACULTY member to cancel their own booking
-export async function cancelBooking(db: Firestore, slotId: string, facultyEmpId: string) {
+export async function cancelBooking(db: Firestore, slotId: string, facultyUserId: string) {
     const slotRef = doc(db, 'slots', slotId);
   
     try {
@@ -51,7 +51,7 @@ export async function cancelBooking(db: Firestore, slotId: string, facultyEmpId:
         }
         
         const slotData = slotSnap.data();
-        if (slotData.booked_by !== facultyEmpId) {
+        if (slotData.booked_by !== facultyUserId) {
           throw new Error("You can only cancel your own bookings.");
         }
   
@@ -70,3 +70,4 @@ export async function cancelBooking(db: Firestore, slotId: string, facultyEmpId:
     
 
     
+
