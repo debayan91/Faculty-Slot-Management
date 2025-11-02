@@ -4,7 +4,7 @@
 import { useState, useMemo } from "react";
 import type { Slot } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, CheckCircle, Loader2 } from "lucide-react";
 import { useFirestore, useUser } from "@/firebase";
 import Link from "next/link";
 import { useCollection } from "react-firebase-hooks/firestore";
@@ -12,6 +12,8 @@ import { collection, query, where, Timestamp } from "firebase/firestore";
 import { bookSlot } from "@/firebase/firestore/slot-booking";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfDay, endOfDay } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 function SlotCard({ slot, onBook, isBookedByOther, facultyName }: { slot: Slot, onBook: (slot: Slot) => void, isBookedByOther: boolean, facultyName: string | null }) {
     return (
@@ -43,12 +45,12 @@ export default function CourseRegistration() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [date, setDate] = useState(new Date()); // Default to today
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<'list' | 'confirmation'>('list');
 
   const slotsQuery = useMemo(() => {
-    if (!firestore) return null;
+    if (!firestore || !date) return null;
     const start = startOfDay(date);
     const end = endOfDay(date);
     
@@ -134,7 +136,7 @@ export default function CourseRegistration() {
 
   return (
     <div className="card-container w-full max-w-4xl mx-auto">
-      {(isLoading) && (
+      {(isLoading && !slotsLoading) && (
         <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-50 rounded-lg">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
@@ -147,17 +149,38 @@ export default function CourseRegistration() {
           </h1>
           <h2 className="sub-heading">Welcome, <span className="gradient-text">{faculty?.name || user?.email}</span>!</h2>
         </div>
-        <Button asChild>
-            <Link href="/my-booked-slots">My Booked Slots</Link>
-        </Button>
-      </div>
-
-      <div className="mb-6">
-        {/* Date navigation will go here */}
+        <div className="flex flex-col sm:flex-row gap-2">
+            <Popover>
+                <PopoverTrigger asChild>
+                <Button
+                    variant={"outline"}
+                    className="w-full sm:w-[240px] justify-start text-left font-normal"
+                >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                />
+                </PopoverContent>
+            </Popover>
+            <Button asChild>
+                <Link href="/my-booked-slots">My Booked Slots</Link>
+            </Button>
+        </div>
       </div>
 
       <div className="space-y-4">
-        {availableSlots.length > 0 ? availableSlots.map(slot => (
+        {slotsLoading ? (
+            <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        ) : availableSlots.length > 0 ? availableSlots.map(slot => (
             <SlotCard 
                 key={slot.id} 
                 slot={slot} 
@@ -167,7 +190,7 @@ export default function CourseRegistration() {
             />
         )) : (
             <div className="text-center py-10">
-                <p className="text-muted-foreground">No bookable slots found for this day.</p>
+                <p className="text-muted-foreground">No bookable slots found for {date ? format(date, "PPP") : 'this day'}.</p>
             </div>
         )}
       </div>
@@ -175,7 +198,3 @@ export default function CourseRegistration() {
     </div>
   );
 }
-
-    
-
-    
