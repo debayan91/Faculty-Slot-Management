@@ -84,7 +84,8 @@ export default function CourseRegistration() {
         await bookSlot(firestore, slot.id, user.uid, faculty.name);
         toast({ title: 'Slot Booked!', description: `You have successfully booked ${slot.course_name}.` });
         setView('confirmation');
-      } catch (error: any) {
+      } catch (error: any)
+      {
         console.error("Failed to book slot:", error);
         toast({ variant: 'destructive', title: 'Booking Failed', description: error.message });
       } finally {
@@ -185,7 +186,7 @@ export default function CourseRegistration() {
                 key={slot.id} 
                 slot={slot} 
                 onBook={handleBookSlot}
-                isBookedByOther={slot.is_booked && slot.booked_by !== user.uid}
+                isBookedByOther={slot.is_booked}
                 facultyName={slot.faculty_name}
             />
         )) : (
