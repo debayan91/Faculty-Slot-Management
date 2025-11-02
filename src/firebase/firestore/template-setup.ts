@@ -46,7 +46,7 @@ export async function seedScheduleTemplates(db: Firestore) {
         return {
             startTime: `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`,
             duration: duration > 0 ? duration : 50,
-            course_name: s.code
+            slot_code: s.code
         }
     }).sort((a,b) => a.startTime.localeCompare(b.startTime));
     

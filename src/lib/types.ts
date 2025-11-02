@@ -15,7 +15,7 @@ export interface Course {
 export interface TemplateSlot {
   startTime: string; // "HH:mm"
   duration: number; // in minutes
-  course_name: string;
+  slot_code: string;
 }
 
 // Represents the template for a whole day
@@ -30,6 +30,7 @@ export interface Slot {
   id: string; // The document ID from Firestore
   slot_datetime: any; // Firestore Timestamp object - use .toDate()
   duration_minutes: number;
+  slot_code: string;
   course_name: string | null;
   faculty_name: string | null;
   room_number: string | null;

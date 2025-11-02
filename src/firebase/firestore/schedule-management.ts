@@ -69,7 +69,8 @@ export async function generateScheduleForDate(db: Firestore, date: Date) {
     const newSlot: Omit<Slot, 'id'> = {
       slot_datetime: Timestamp.fromDate(slotDateTime),
       duration_minutes: templateSlot.duration,
-      course_name: templateSlot.course_name, 
+      slot_code: templateSlot.slot_code,
+      course_name: null, 
       faculty_name: null,
       room_number: null,
       is_bookable: false,

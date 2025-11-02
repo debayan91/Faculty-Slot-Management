@@ -281,7 +281,8 @@ export default function AdminDashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[100px]">Time</TableHead>
+                    <TableHead className="w-[80px]">Time</TableHead>
+                    <TableHead className="w-[80px]">Code</TableHead>
                     <TableHead>Course Name</TableHead>
                     <TableHead>Assigned Faculty</TableHead>
                     <TableHead>Room</TableHead>
@@ -294,6 +295,9 @@ export default function AdminDashboardPage() {
                     <TableRow key={slot.id}>
                       <TableCell className="font-medium">
                         {format(new Date((slot.slot_datetime as any).toDate()), 'p')}
+                      </TableCell>
+                       <TableCell className="font-mono text-xs text-muted-foreground">
+                        {slot.slot_code}
                       </TableCell>
                       <TableCell>
                         <EditableCell slotId={slot.id} field="course_name" value={slot.course_name} onSave={handleUpdate} />
@@ -329,3 +333,4 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
