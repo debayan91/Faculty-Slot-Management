@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, CheckCircle, Loader2 } from "lucide-react";
 import { useFirestore, useUser } from "@/firebase";
 import Link from "next/link";
-import { collection, query, where, Timestamp, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, Timestamp, orderBy } from "firebase/firestore";
+import { useCollection } from 'react-firebase-hooks/firestore';
 import { bookSlot } from "@/firebase/firestore/slot-booking";
 import { useToast } from "@/hooks/use-toast";
-import { format, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -46,49 +47,38 @@ export default function CourseRegistration() {
 
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
-  const [slotsLoading, setSlotsLoading] = useState(true);
-  const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [view, setView] = useState<'list' | 'confirmation'>('list');
 
+  const slotsQuery = useMemo(() => {
+    if (!firestore || !date) return null;
+    const start = startOfDay(date);
+    const end = new Date(start);
+    end.setHours(23, 59, 59, 999);
+
+    return query(
+      collection(firestore, 'slots'),
+      where('slot_datetime', '>=', Timestamp.fromDate(start)),
+      where('slot_datetime', '<=', Timestamp.fromDate(end))
+    );
+  }, [firestore, date]);
+
+  const [slotsSnapshot, slotsLoading, slotsError] = useCollection(slotsQuery);
+
+  const availableSlots: Slot[] = useMemo(() => {
+    if (!slotsSnapshot) return [];
+    return slotsSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
+        .filter(slot => slot.is_bookable)
+        .sort((a, b) => (a.slot_datetime as any).toMillis() - (b.slot_datetime as any).toMillis());
+  }, [slotsSnapshot]);
+
   useEffect(() => {
-    if (!firestore || !date || !user) {
-        setAvailableSlots([]);
-        return;
-    };
+    if(slotsError) {
+      console.error("Error fetching available slots:", slotsError);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots. You may need to create a Firestore index.' });
+    }
+  }, [slotsError, toast]);
 
-    const fetchSlots = async () => {
-        setSlotsLoading(true);
-        try {
-            const q = query(
-                collection(firestore, 'slots'),
-                where('is_bookable', '==', true),
-                orderBy('is_bookable'),
-                orderBy('slot_datetime', 'asc')
-              );
-            
-            const querySnapshot = await getDocs(q);
-            const start = startOfDay(date);
-            const end = endOfDay(date);
-
-            const slots = querySnapshot.docs
-                .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
-                .filter(slot => {
-                    const slotDate = (slot.slot_datetime as any).toDate();
-                    return isWithinInterval(slotDate, { start, end });
-                });
-            
-            setAvailableSlots(slots);
-        } catch (error) {
-            console.error("Error fetching available slots:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots. You may need to create a Firestore index.' });
-            setAvailableSlots([]);
-        } finally {
-            setSlotsLoading(false);
-        }
-    };
-
-    fetchSlots();
-  }, [firestore, date, user]);
 
   const handleBookSlot = async (slot: Slot) => {
     if (!faculty || !user) {
@@ -104,9 +94,7 @@ export default function CourseRegistration() {
       try {
         await bookSlot(firestore, slot.id, user.uid, faculty.name);
         toast({ title: 'Slot Booked!', description: `You have successfully booked ${slot.course_name}.` });
-        // Manually update the state to reflect the booking
-        setAvailableSlots(prevSlots => prevSlots.map(s => s.id === slot.id ? {...s, is_booked: true, booked_by: user.uid, faculty_name: faculty.name } : s));
-
+        // No need to manually update state, useCollection will do it automatically
       } catch (error: any)
       {
         console.error("Failed to book slot:", error);
@@ -151,8 +139,6 @@ export default function CourseRegistration() {
             <div className="flex justify-center gap-4">
                 <Button onClick={() => {
                     setView('list');
-                    // This is a bit of a hack to force a re-fetch, but it works with our new logic
-                    setDate(new Date(date!.getTime()));
                 }} className="supabase-button">Book Another Slot</Button>
                 <Button asChild variant="outline">
                     <Link href="/my-booked-slots">View My Bookings</Link>

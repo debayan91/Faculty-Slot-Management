@@ -1,3 +1,4 @@
+
 {
   "indexes": [
     {
@@ -5,11 +6,17 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "is_bookable",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "slot_datetime",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "slots",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "booked_by",
           "order": "ASCENDING"
         }
       ]
