@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User } from 'firebase/auth';
@@ -5,7 +6,7 @@ import { onIdTokenChanged } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 
 import { useAuth, useFirestore } from '@/firebase';
-import { type Faculty, getFacultyProfile } from '@/firebase/firestore/users';
+import { type Faculty, getFacultyProfile } from '@/firebase/firestore/user-profiles';
 
 export type UserState = {
   user: User | null;
@@ -51,3 +52,5 @@ export function useUser() {
 
   return userState;
 }
+
+    

@@ -9,7 +9,7 @@ import { useFirestore, useUser } from "@/firebase";
 import Link from "next/link";
 import { useCollection } from "react-firebase-hooks/firestore";
 import { collection, query, where, Timestamp } from "firebase/firestore";
-import { bookSlot } from "@/firebase/firestore/slots";
+import { bookSlot } from "@/firebase/firestore/slot-booking";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfDay, endOfDay } from 'date-fns';
 
@@ -175,3 +175,5 @@ export default function CourseRegistration() {
     </div>
   );
 }
+
+    

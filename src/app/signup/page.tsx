@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useAuth, useFirestore, useUser } from "@/firebase";
-import { createFacultyProfile } from "@/firebase/firestore/users";
+import { createFacultyProfile } from "@/firebase/firestore/user-profiles";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -149,3 +150,5 @@ export default function SignupPage() {
     </div>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
-import { createFacultyProfile } from "@/firebase/firestore/users";
+import { createFacultyProfile } from "@/firebase/firestore/user-profiles";
 import { Loader2 } from "lucide-react";
 
 export default function LoginForm() {
@@ -158,3 +159,5 @@ export default function LoginForm() {
     </Card>
   );
 }
+
+    

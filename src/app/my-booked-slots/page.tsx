@@ -12,7 +12,7 @@ import type { Slot } from '@/lib/types';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { cancelBooking } from '@/firebase/firestore/slots';
+import { cancelBooking } from '@/firebase/firestore/slot-booking';
 
 const SlotCard = ({ slot }: { slot: Slot }) => {
   const firestore = useFirestore();
@@ -20,7 +20,7 @@ const SlotCard = ({ slot }: { slot: Slot }) => {
   const { toast } = useToast();
 
   const handleCancel = async () => {
-    if (!user || !user.uid) return;
+    if (!user || !user.uid || !slot.id) return;
     const isConfirmed = confirm(`Are you sure you want to cancel your booking for "${slot.course_name}"?`);
     if (isConfirmed) {
         try {
@@ -121,3 +121,5 @@ export default function MyBookedSlotsPage() {
     </div>
   );
 }
+
+    
