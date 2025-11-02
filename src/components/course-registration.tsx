@@ -71,7 +71,7 @@ export default function CourseRegistration() {
 
   const handleBookSlot = async (slot: Slot) => {
     if (!faculty || !user) {
-        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to book a slot.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in as a faculty member to book a slot.' });
         return;
     }
     const formattedTime = format(new Date((slot.slot_datetime as any).toDate()), 'p');
