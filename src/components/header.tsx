@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   UserCog,
   Home,
+  FileText,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -131,10 +132,16 @@ export function Header() {
                       <span>Home</span>
                     </DropdownMenuItem>
                   {isAdmin && (
+                    <>
                     <DropdownMenuItem onClick={() => router.push('/admin')}>
                       <ShieldCheck className="mr-2 h-4 w-4" />
                       <span>Admin Dashboard</span>
                     </DropdownMenuItem>
+                     <DropdownMenuItem onClick={() => router.push('/admin/templates')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      <span>Template Manager</span>
+                    </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>

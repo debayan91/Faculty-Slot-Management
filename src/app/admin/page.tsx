@@ -7,8 +7,8 @@ import { useAdmin } from '@/context/AdminProvider';
 import { useFirestore } from '@/firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
 import { collection, query, where, Timestamp } from 'firebase/firestore';
-import type { Slot } from '@/lib/types';
-import { format, startOfDay, isSameDay } from 'date-fns';
+import type { Slot, ScheduleTemplate } from '@/lib/types';
+import { format, startOfDay } from 'date-fns';
 import {
   Card,
   CardContent,
@@ -16,15 +16,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, Calendar as CalendarIcon, Trash2, Wand2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Trash2, Wand2, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { deleteScheduleForDate, generateScheduleForDate, updateSlot } from '@/firebase/firestore/admin';
+import { deleteScheduleForDate, generateScheduleForDate, updateSlot } from '@/firebase/firestore/schedule-management';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -44,20 +43,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
 
 const EditableCell = ({ slotId, field, value, onSave }: { slotId: string, field: keyof Slot, value: string | null, onSave: (slotId: string, field: keyof Slot, value: string) => void }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [currentValue, setCurrentValue] = useState(value);
-  
+
     const handleSave = () => {
       onSave(slotId, field, currentValue || '');
       setIsEditing(false);
     };
-  
+
     if (isEditing) {
       return (
         <div className="flex gap-1">
-          <Input 
+          <Input
             value={currentValue || ''}
             onChange={(e) => setCurrentValue(e.target.value)}
             className="h-8"
@@ -67,7 +68,7 @@ const EditableCell = ({ slotId, field, value, onSave }: { slotId: string, field:
         </div>
       );
     }
-  
+
     return (
       <div onClick={() => setIsEditing(true)} className="min-h-[2rem] cursor-pointer">
         {value || <span className="text-muted-foreground">Empty</span>}
@@ -84,12 +85,17 @@ export default function AdminDashboardPage() {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check for templates
+  const templatesQuery = useMemo(() => firestore ? collection(firestore, 'schedule_templates') : null, [firestore]);
+  const [templatesSnapshot, templatesLoading] = useCollection(templatesQuery);
+  const templatesExist = useMemo(() => (templatesSnapshot?.docs.length ?? 0) > 0, [templatesSnapshot]);
+
   const slotsQuery = useMemo(() => {
     if (!firestore || !date) return null;
     const start = startOfDay(date);
     const end = new Date(start);
     end.setHours(23, 59, 59, 999);
-    
+
     return query(
       collection(firestore, 'slots'),
       where('slot_datetime', '>=', Timestamp.fromDate(start)),
@@ -114,7 +120,7 @@ export default function AdminDashboardPage() {
 
   const handleGenerateSchedule = async () => {
     if (!firestore || !date) return;
-    
+
     setIsLoading(true);
     toast({ title: 'Generating Schedule...', description: `Creating slots for ${date.toLocaleDateString()}`});
 
@@ -157,7 +163,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  if (adminLoading) {
+  if (adminLoading || templatesLoading) {
     return (
       <div className="flex items-center justify-center h-screen -mt-24">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -168,6 +174,10 @@ export default function AdminDashboardPage() {
   if (!isAdmin) {
     return null; // Redirect is handled by useEffect
   }
+
+  const generationDisabled = isLoading || !templatesExist || (slots && slots.length > 0);
+  const deletionDisabled = isLoading || !templatesExist || !slots || slots.length === 0;
+
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -185,6 +195,7 @@ export default function AdminDashboardPage() {
                     <Button
                         variant={"outline"}
                         className="w-full sm:w-[280px] justify-start text-left font-normal"
+                        disabled={!templatesExist}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -200,13 +211,13 @@ export default function AdminDashboardPage() {
                     </PopoverContent>
                 </Popover>
 
-                <Button onClick={handleGenerateSchedule} disabled={isLoading || (slots && slots.length > 0)} className="w-full sm:w-auto">
+                <Button onClick={handleGenerateSchedule} disabled={generationDisabled} className="w-full sm:w-auto">
                     <Wand2 className="mr-2 h-4 w-4" /> Generate
                 </Button>
 
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={isLoading || !slots || slots.length === 0} className="w-full sm:w-auto">
+                        <Button variant="destructive" disabled={deletionDisabled} className="w-full sm:w-auto">
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </Button>
                     </AlertDialogTrigger>
@@ -227,12 +238,22 @@ export default function AdminDashboardPage() {
             </div>
         </CardHeader>
         <CardContent>
-            {slotsLoading && (
+            {!templatesExist ? (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>First-Time Setup Required</AlertTitle>
+                <AlertDescription>
+                  Welcome! Before you can generate schedules, you need to create the daily templates.
+                  <Button asChild variant="link" className="p-0 h-auto ml-1">
+                    <Link href="/admin/templates">Go to Template Manager to seed them.</Link>
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            ) : slotsLoading ? (
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-            )}
-            {!slotsLoading && slots.length === 0 && (
+            ) : slots.length === 0 ? (
                  <div className="text-center py-16">
                     <h3 className="text-xl font-semibold">No Schedule Found</h3>
                     <p className="text-muted-foreground mt-2">
@@ -240,8 +261,7 @@ export default function AdminDashboardPage() {
                         Click the "Generate" button to create one from the daily template.
                     </p>
                  </div>
-            )}
-            {!slotsLoading && slots.length > 0 && (
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -278,8 +298,8 @@ export default function AdminDashboardPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {slot.is_booked ? 
-                            <span className="flex items-center text-green-500"><CheckCircle className="mr-2 h-4 w-4"/> Booked</span> : 
+                        {slot.is_booked ?
+                            <span className="flex items-center text-green-500"><CheckCircle className="mr-2 h-4 w-4"/> Booked</span> :
                             <span className="flex items-center text-yellow-500"><AlertTriangle className="mr-2 h-4 w-4"/> Open</span>
                         }
                       </TableCell>
