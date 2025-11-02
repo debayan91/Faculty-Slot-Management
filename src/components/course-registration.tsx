@@ -1,14 +1,13 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Slot } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, CheckCircle, Loader2 } from "lucide-react";
 import { useFirestore, useUser } from "@/firebase";
 import Link from "next/link";
-import { useCollection } from "react-firebase-hooks/firestore";
-import { collection, query, where, Timestamp } from "firebase/firestore";
+import { collection, query, where, Timestamp, getDocs } from "firebase/firestore";
 import { bookSlot } from "@/firebase/firestore/slot-booking";
 import { useToast } from "@/hooks/use-toast";
 import { format, startOfDay, endOfDay } from 'date-fns';
@@ -47,27 +46,46 @@ export default function CourseRegistration() {
 
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
+  const [slotsLoading, setSlotsLoading] = useState(true);
+  const [availableSlots, setAvailableSlots] = useState<Slot[]>([]);
   const [view, setView] = useState<'list' | 'confirmation'>('list');
 
-  const slotsQuery = useMemo(() => {
-    if (!firestore || !date) return null;
-    const start = startOfDay(date);
-    const end = endOfDay(date);
-    
-    return query(
-      collection(firestore, 'slots'),
-      where('slot_datetime', '>=', Timestamp.fromDate(start)),
-      where('slot_datetime', '<=', Timestamp.fromDate(end)),
-      where('is_bookable', '==', true)
-    );
-  }, [firestore, date]);
+  useEffect(() => {
+    if (!firestore || !date || !user) {
+        setAvailableSlots([]);
+        return;
+    };
 
-  const [slotsSnapshot, slotsLoading] = useCollection(slotsQuery);
+    const fetchSlots = async () => {
+        setSlotsLoading(true);
+        try {
+            const start = startOfDay(date);
+            const end = endOfDay(date);
+            
+            const q = query(
+                collection(firestore, 'slots'),
+                where('slot_datetime', '>=', Timestamp.fromDate(start)),
+                where('slot_datetime', '<=', Timestamp.fromDate(end)),
+                where('is_bookable', '==', true)
+              );
+            
+            const querySnapshot = await getDocs(q);
+            const slots = querySnapshot.docs
+                .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
+                .sort((a, b) => (a.slot_datetime as any).toMillis() - (b.slot_datetime as any).toMillis());
+            
+            setAvailableSlots(slots);
+        } catch (error) {
+            console.error("Error fetching available slots:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots.' });
+            setAvailableSlots([]);
+        } finally {
+            setSlotsLoading(false);
+        }
+    };
 
-  const availableSlots: Slot[] = useMemo(() => {
-    if (!slotsSnapshot) return [];
-    return slotsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Slot));
-  }, [slotsSnapshot]);
+    fetchSlots();
+  }, [firestore, date, user]);
 
   const handleBookSlot = async (slot: Slot) => {
     if (!faculty || !user) {
@@ -84,6 +102,9 @@ export default function CourseRegistration() {
         await bookSlot(firestore, slot.id, user.uid, faculty.name);
         toast({ title: 'Slot Booked!', description: `You have successfully booked ${slot.course_name}.` });
         setView('confirmation');
+        // Manually update the state to reflect the booking
+        setAvailableSlots(prevSlots => prevSlots.map(s => s.id === slot.id ? {...s, is_booked: true, faculty_name: faculty.name } : s));
+
       } catch (error: any)
       {
         console.error("Failed to book slot:", error);
@@ -94,7 +115,7 @@ export default function CourseRegistration() {
     }
   };
 
-  const loading = userLoading || slotsLoading;
+  const loading = userLoading;
 
   if (loading) {
     return (
@@ -126,7 +147,11 @@ export default function CourseRegistration() {
             <p className="text-sm mb-6 text-light">A confirmation email has been *simulated* to <span className="font-medium-theme text-light">{user?.email}</span>.</p>
 
             <div className="flex justify-center gap-4">
-                <Button onClick={() => setView('list')} className="supabase-button">Book Another Slot</Button>
+                <Button onClick={() => {
+                    setView('list');
+                    // This is a bit of a hack to force a re-fetch, but it works with our new logic
+                    setDate(new Date(date!.getTime()));
+                }} className="supabase-button">Book Another Slot</Button>
                 <Button asChild variant="outline">
                     <Link href="/my-booked-slots">View My Bookings</Link>
                 </Button>
@@ -137,7 +162,7 @@ export default function CourseRegistration() {
 
   return (
     <div className="card-container w-full max-w-4xl mx-auto">
-      {(isLoading && !slotsLoading) && (
+      {(isLoading) && (
         <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-50 rounded-lg">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
