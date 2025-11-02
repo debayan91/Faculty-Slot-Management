@@ -62,6 +62,7 @@ export default function CourseRegistration() {
             const q = query(
                 collection(firestore, 'slots'),
                 where('is_bookable', '==', true),
+                orderBy('is_bookable'), // This line is not strictly needed but good for clarity
                 orderBy('slot_datetime', 'asc')
               );
             
@@ -87,7 +88,7 @@ export default function CourseRegistration() {
     };
 
     fetchSlots();
-  }, [firestore, date, user]);
+  }, [firestore, date, user, toast]);
 
   const handleBookSlot = async (slot: Slot) => {
     if (!faculty || !user) {
