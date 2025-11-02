@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/context/AdminProvider';
 import { useFirestore } from '@/firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
-import type { Slot, ScheduleTemplate } from '@/lib/types';
+import { collection, query, where, Timestamp, getDocs } from 'firebase/firestore';
+import type { Slot } from '@/lib/types';
 import { format, startOfDay } from 'date-fns';
 import {
   Card,
@@ -16,7 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, Calendar as CalendarIcon, Trash2, Wand2, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Trash2, Wand2, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from 'next/link';
 
 const EditableCell = ({ slotId, field, value, onSave }: { slotId: string, field: keyof Slot, value: string | null, onSave: (slotId: string, field: keyof Slot, value: string) => void }) => {
@@ -84,11 +84,27 @@ export default function AdminDashboardPage() {
 
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
+  const [templatesExist, setTemplatesExist] = useState(true);
+  const [checkingTemplates, setCheckingTemplates] = useState(true);
 
-  // Check for templates
-  const templatesQuery = useMemo(() => firestore ? collection(firestore, 'schedule_templates') : null, [firestore]);
-  const [templatesSnapshot, templatesLoading] = useCollection(templatesQuery);
-  const templatesExist = useMemo(() => (templatesSnapshot?.docs.length ?? 0) > 0, [templatesSnapshot]);
+  // Check for templates on mount
+  useEffect(() => {
+    const checkTemplates = async () => {
+      if (!firestore) return;
+      try {
+        const templateCollection = collection(firestore, 'schedule_templates');
+        const snapshot = await getDocs(templateCollection);
+        setTemplatesExist(!snapshot.empty);
+      } catch (e) {
+        console.error("Error checking for templates:", e);
+        setTemplatesExist(false); // Assume they don't exist on error
+      } finally {
+        setCheckingTemplates(false);
+      }
+    };
+    checkTemplates();
+  }, [firestore]);
+
 
   const slotsQuery = useMemo(() => {
     if (!firestore || !date) return null;
@@ -163,7 +179,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  if (adminLoading || templatesLoading) {
+  if (adminLoading || checkingTemplates) {
     return (
       <div className="flex items-center justify-center h-screen -mt-24">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -175,9 +191,8 @@ export default function AdminDashboardPage() {
     return null; // Redirect is handled by useEffect
   }
 
-  const generationDisabled = isLoading || !templatesExist || (slots && slots.length > 0);
-  const deletionDisabled = isLoading || !templatesExist || !slots || slots.length === 0;
-
+  const generationDisabled = isLoading || (slots && slots.length > 0) || !templatesExist;
+  const deletionDisabled = isLoading || !slots || slots.length === 0;
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -195,7 +210,6 @@ export default function AdminDashboardPage() {
                     <Button
                         variant={"outline"}
                         className="w-full sm:w-[280px] justify-start text-left font-normal"
-                        disabled={!templatesExist}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -239,17 +253,19 @@ export default function AdminDashboardPage() {
         </CardHeader>
         <CardContent>
             {!templatesExist ? (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertTitle>First-Time Setup Required</AlertTitle>
-                <AlertDescription>
-                  Welcome! Before you can generate schedules, you need to create the daily templates.
-                  <Button asChild variant="link" className="p-0 h-auto ml-1">
-                    <Link href="/admin/templates">Go to Template Manager to seed them.</Link>
-                  </Button>
-                </AlertDescription>
+              <Alert variant="destructive" className="mb-6">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Action Required: Setup Schedule Templates</AlertTitle>
+                  <AlertDescription>
+                    The schedule templates have not been created in the database yet. The "Generate" function is disabled until the templates are seeded.
+                    <Button asChild variant="link" className="p-0 h-auto ml-1">
+                      <Link href="/admin/templates">Go to Template Manager to fix this.</Link>
+                    </Button>
+                  </AlertDescription>
               </Alert>
-            ) : slotsLoading ? (
+            ) : null}
+
+            {slotsLoading ? (
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
@@ -258,7 +274,7 @@ export default function AdminDashboardPage() {
                     <h3 className="text-xl font-semibold">No Schedule Found</h3>
                     <p className="text-muted-foreground mt-2">
                         There is no schedule generated for {date?.toLocaleDateString()}.<br/>
-                        Click the "Generate" button to create one from the daily template.
+                        {templatesExist ? 'Click the "Generate" button to create one from the templates.' : 'Please seed the templates first.'}
                     </p>
                  </div>
             ) : (

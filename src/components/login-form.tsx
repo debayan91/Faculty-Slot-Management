@@ -61,6 +61,7 @@ export default function LoginForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      // Check if a profile already exists before creating a new one
       await createFacultyProfile(firestore, user.uid, {
         empId: user.uid.slice(0, 8),
         name: user.displayName || "Google User",

@@ -1,6 +1,6 @@
 
 import { type User as FirebaseUser } from "firebase/auth";
-import type { Faculty as FacultyDoc } from "@/firebase/firestore/users";
+import type { Faculty as FacultyDoc } from "@/firebase/firestore/user-profiles";
 
 // We can extend the base user with our own faculty profile data
 export interface User extends FirebaseUser, Partial<FacultyDoc> {}
@@ -15,6 +15,7 @@ export interface Course {
 export interface TemplateSlot {
   startTime: string; // "HH:mm"
   duration: number; // in minutes
+  course_name: string;
 }
 
 // Represents the template for a whole day
@@ -36,3 +37,5 @@ export interface Slot {
   is_booked: boolean;
   booked_by: string | null; // The empId of the faculty who booked it
 }
+
+    

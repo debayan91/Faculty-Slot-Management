@@ -68,3 +68,5 @@ export async function cancelBooking(db: Firestore, slotId: string, facultyEmpId:
   }
 
     
+
+    

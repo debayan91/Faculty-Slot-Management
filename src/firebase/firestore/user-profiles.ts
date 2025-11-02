@@ -41,7 +41,7 @@ export async function createFacultyProfile(db: Firestore, userId: string, data: 
           userId,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-      });
+      }, { merge: true }); // Use merge to be safe
     }
 }
 

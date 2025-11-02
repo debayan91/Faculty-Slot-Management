@@ -1,6 +1,5 @@
 
-
-"use client";
+'use client';
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,7 +15,7 @@ import {
   ShieldCheck,
   UserCog,
   Home,
-  FileText,
+  DatabaseZap,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -133,14 +132,14 @@ export function Header() {
                     </DropdownMenuItem>
                   {isAdmin && (
                     <>
-                    <DropdownMenuItem onClick={() => router.push('/admin')}>
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      <span>Admin Dashboard</span>
-                    </DropdownMenuItem>
-                     <DropdownMenuItem onClick={() => router.push('/admin/templates')}>
-                      <FileText className="mr-2 h-4 w-4" />
-                      <span>Template Manager</span>
-                    </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/admin')}>
+                        <ShieldCheck className="mr-2 h-4 w-4" />
+                        <span>Admin Dashboard</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push('/admin/templates')}>
+                        <DatabaseZap className="mr-2 h-4 w-4" />
+                        <span>Template Manager</span>
+                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
@@ -166,3 +165,5 @@ export function Header() {
     </header>
   );
 }
+
+    

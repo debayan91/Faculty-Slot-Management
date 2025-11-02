@@ -9,24 +9,38 @@ import {
   writeBatch,
   Timestamp,
   doc,
-  getDoc,
   updateDoc,
-  serverTimestamp,
   type Firestore,
+  getDoc,
 } from 'firebase/firestore';
-import type { ScheduleTemplate, Slot } from '@/lib/types';
+import { parse } from 'date-fns';
+import type { Slot, ScheduleTemplate } from '@/lib/types';
+import { theoryClasses, labClasses } from '@/lib/timetable';
 
+function parseTime(timeStr: string) {
+    return parse(timeStr, 'h:mm a', new Date());
+}
 
 /**
  * Generates and saves a full day's schedule to the 'slots' collection
- * based on a daily template from 'schedule_templates'.
+ * based on a template from the `schedule_templates` collection.
  * It will not create duplicates if slots for that day already exist.
  */
 export async function generateScheduleForDate(db: Firestore, date: Date) {
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayName = dayNames[date.getDay()];
 
-  // 1. Check if slots for this date already exist to prevent duplication
+  // 1. Check if a template for this day exists
+  const templateRef = doc(db, 'schedule_templates', dayName);
+  const templateSnap = await getDoc(templateRef);
+
+  if (!templateSnap.exists()) {
+    throw new Error(`Schedule template for '${dayName}' not found.`);
+  }
+  const template = templateSnap.data() as Omit<ScheduleTemplate, 'id'>;
+
+
+  // 2. Check if slots for this date already exist to prevent duplication
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date(date);
@@ -43,27 +57,19 @@ export async function generateScheduleForDate(db: Firestore, date: Date) {
     throw new Error(`Schedule already exists for ${date.toLocaleDateString()}. Found ${existingSlotsSnapshot.size} slots.`);
   }
 
-  // 2. Fetch the schedule template for the given day
-  const templateRef = doc(db, 'schedule_templates', dayName);
-  const templateSnap = await getDoc(templateRef);
-
-  if (!templateSnap.exists()) {
-    throw new Error(`Schedule template for '${dayName}' not found.`);
-  }
-  const template = templateSnap.data() as Omit<ScheduleTemplate, 'id'>;
-
-  // 3. Create a batch write operation
+  // 3. Create a batch write operation from the template
   const batch = writeBatch(db);
 
   template.slots.forEach(templateSlot => {
-    const [hours, minutes] = templateSlot.startTime.split(':').map(Number);
+    const startTime = parse(templateSlot.startTime, 'HH:mm', new Date());
+    
     const slotDateTime = new Date(date);
-    slotDateTime.setHours(hours, minutes, 0, 0);
+    slotDateTime.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
 
     const newSlot: Omit<Slot, 'id'> = {
       slot_datetime: Timestamp.fromDate(slotDateTime),
       duration_minutes: templateSlot.duration,
-      course_name: 'Unavailable',
+      course_name: templateSlot.course_name, 
       faculty_name: null,
       room_number: null,
       is_bookable: false,
