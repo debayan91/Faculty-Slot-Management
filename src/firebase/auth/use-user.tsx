@@ -30,6 +30,7 @@ export function useUser() {
     }
 
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
+      setUserState(prevState => ({ ...prevState, loading: true }));
       if (user) {
         // User is signed in. Fetch their profile.
         try {
@@ -52,7 +53,3 @@ export function useUser() {
 
   return userState;
 }
-
-    
-
-    
