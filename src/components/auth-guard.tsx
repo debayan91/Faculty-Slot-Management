@@ -22,18 +22,20 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
-    const isAdminRoute = pathname.startsWith('/admin') && pathname !== '/admin/auth';
+    const isAdminRoute = pathname.startsWith('/admin');
+
+    // **NEW LOGIC**: Prioritize admin access to admin routes
+    if (isAdmin && isAdminRoute) {
+      // If user is an admin and on an admin route, allow access.
+      // This includes the case where they are not logged in as a faculty member.
+      return;
+    }
 
     // If user is logged in and authorized
     if (user && isAuthorized) {
       // If they are on a public auth page (like /login or /unauthorized), redirect to home
       if (pathname === '/login' || pathname === '/signup' || pathname === '/unauthorized') {
         router.push('/');
-      }
-      // If they are an admin on a non-admin page, that's fine.
-      // If they are NOT an admin but try to access admin pages, redirect.
-      if (!isAdmin && isAdminRoute) {
-        router.push('/admin/auth'); // or '/'
       }
       return;
     }
@@ -46,7 +48,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If user is NOT logged in
+    // If user is NOT logged in (and not an admin trying to access admin pages)
     if (!user) {
       if (!isPublicRoute) {
         router.push('/');
@@ -66,6 +68,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   // This logic prevents content "flickering" while redirects are in flight.
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isAdminRoute = pathname.startsWith('/admin');
+  
+  if (isAdmin && isAdminRoute) {
+    return <>{children}</>;
+  }
+  
   if (!user && !isPublicRoute) {
     // If not logged in and trying to access protected route, show nothing while redirecting.
     return null;
