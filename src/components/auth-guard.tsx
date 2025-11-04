@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { useUser } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 
-// List of routes that are publicly accessible
+// List of routes that are publicly accessible or part of the auth flow
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/unauthorized'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -23,19 +23,20 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     if (user && isAuthorized) {
       // User is logged in and authorized
+      // If they are on a public page (like /login or /unauthorized), redirect to home
       if (isPublicRoute && pathname !== '/') {
-        // If they are on a public page (like /login), redirect to home
         router.push('/');
       }
     } else if (user && !isAuthorized) {
       // User is logged in but NOT authorized
+      // If they are not on the unauthorized page, redirect them there
       if (pathname !== '/unauthorized') {
         router.push('/unauthorized');
       }
     } else {
       // User is not logged in
+      // If trying to access a protected page, redirect to the login page (which is '/')
       if (!isPublicRoute) {
-        // If trying to access a protected page, redirect to login
         router.push('/');
       }
     }
@@ -49,12 +50,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Prevent flicker while redirecting
+  // This logic prevents content "flickering" while redirects are in flight.
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   if (!user && !isPublicRoute) {
+    // If not logged in and trying to access protected route, show nothing while redirecting.
     return null;
   }
   if (user && !isAuthorized && pathname !== '/unauthorized') {
+     // If logged in, not authorized, and not on the unauthorized page, show nothing.
     return null;
   }
 

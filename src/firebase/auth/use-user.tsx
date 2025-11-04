@@ -4,7 +4,7 @@
 import type { User } from 'firebase/auth';
 import { onIdTokenChanged } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, type Firestore } from 'firebase/firestore';
 
 import { useAuth, useFirestore } from '@/firebase';
 import { type Faculty, getFacultyProfile } from '@/firebase/firestore/user-profiles';
@@ -16,9 +16,10 @@ export type UserState = {
   loading: boolean;
 };
 
-async function checkAuthorization(db: any, email: string): Promise<boolean> {
+async function checkAuthorization(db: Firestore, email: string): Promise<boolean> {
   if (!db || !email) return false;
   try {
+    // The document ID is the email address itself for easy lookup
     const authEmailRef = doc(db, 'authorized_emails', email);
     const docSnap = await getDoc(authEmailRef);
     return docSnap.exists();
@@ -58,6 +59,7 @@ export function useUser() {
             setUserState({ user, faculty: facultyProfile, isAuthorized: true, loading: false });
           } catch (error) {
             console.error("[useUser] Failed to fetch faculty profile:", error);
+            // Still authorized, but profile fetch failed.
             setUserState({ user, faculty: null, isAuthorized: true, loading: false });
           }
         } else {
