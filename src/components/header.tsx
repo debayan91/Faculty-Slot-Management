@@ -2,6 +2,7 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { useAuth, useUser } from "@/firebase";
@@ -102,7 +103,8 @@ export function Header() {
       <div className="container flex h-20 max-w-screen-2xl items-center">
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <BookOpenCheck className="h-6 w-6" />
+            <Image src="/logo-dark.png" alt="Logo" width={24} height={24} className="dark:hidden" />
+            <Image src="/logo-light.png" alt="Logo" width={24} height={24} className="hidden dark:block" />
             <span className="font-bold">Faculty Slot Management</span>
           </Link>
         </div>
@@ -215,3 +217,5 @@ export function Header() {
     </header>
   );
 }
+
+    
