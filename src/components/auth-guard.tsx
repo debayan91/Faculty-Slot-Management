@@ -5,12 +5,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useUser } from '@/firebase';
 import { Loader2 } from 'lucide-react';
+import { useAdmin } from '@/context/AdminProvider';
 
 // List of routes that are publicly accessible or part of the auth flow
 const PUBLIC_ROUTES = ['/', '/login', '/signup', '/unauthorized', '/admin/auth'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isAuthorized } = useUser();
+  const { isAdmin } = useAdmin();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -20,29 +22,39 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+    const isAdminRoute = pathname.startsWith('/admin') && pathname !== '/admin/auth';
 
+    // If user is logged in and authorized
     if (user && isAuthorized) {
-      // User is logged in and authorized
-      // If they are on a public page (like /login or /unauthorized), redirect to home
-      if (isPublicRoute && pathname !== '/') {
-        // Exception: allow authorized users to still access admin auth
-        if (pathname === '/admin/auth') return;
+      // If they are on a public auth page (like /login or /unauthorized), redirect to home
+      if (pathname === '/login' || pathname === '/signup' || pathname === '/unauthorized') {
         router.push('/');
       }
-    } else if (user && !isAuthorized) {
-      // User is logged in but NOT authorized
-      // If they are not on the unauthorized page, redirect them there
+      // If they are an admin on a non-admin page, that's fine.
+      // If they are NOT an admin but try to access admin pages, redirect.
+      if (!isAdmin && isAdminRoute) {
+        router.push('/admin/auth'); // or '/'
+      }
+      return;
+    }
+
+    // If user is logged in but NOT authorized
+    if (user && !isAuthorized) {
       if (pathname !== '/unauthorized') {
         router.push('/unauthorized');
       }
-    } else {
-      // User is not logged in
-      // If trying to access a protected page, redirect to the login page (which is '/')
+      return;
+    }
+
+    // If user is NOT logged in
+    if (!user) {
       if (!isPublicRoute) {
         router.push('/');
       }
+      return;
     }
-  }, [user, loading, isAuthorized, router, pathname]);
+
+  }, [user, loading, isAuthorized, router, pathname, isAdmin]);
 
   if (loading) {
     return (
