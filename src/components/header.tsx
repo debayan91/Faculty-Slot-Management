@@ -31,7 +31,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/context/AdminProvider";
 import { Switch } from "./ui/switch";
@@ -131,7 +131,7 @@ export function Header() {
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8">
+                  <Button variant="ghost" className="backdrop-blur-xl relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
                       <AvatarImage
                         src={user.photoURL || undefined}
@@ -196,7 +196,7 @@ export function Header() {
         </div>
       </div>
       {/* Secondary Navbar */}
-      <nav className="border-t border-border/40">
+      <nav className="border-b border-border/40">
         <div className="container flex h-12 max-w-screen-2xl items-center justify-between">
             <div className="flex items-center space-x-2">
                 {navButtons.map((button) => (

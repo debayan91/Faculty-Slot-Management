@@ -42,7 +42,7 @@ export default function LoginForm() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast({ title: "Login Successful" });
-      router.push("/my-booked-slots");
+      router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -70,7 +70,7 @@ export default function LoginForm() {
       });
 
       toast({ title: "Signed in with Google" });
-      router.push("/my-booked-slots");
+      router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
