@@ -37,6 +37,7 @@ import { useAdmin } from "@/context/AdminProvider";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const auth = useAuth();
@@ -199,7 +200,7 @@ export function Header() {
         <div className="container flex h-12 max-w-screen-2xl items-center justify-between">
             <div className="flex items-center space-x-2">
                 {navButtons.map((button) => (
-                    <Button key={button.name} variant="ghost" size="sm" className="h-8">
+                    <Button key={button.name} variant="ghost" size="sm" className={cn("h-8 no-shadow", {"bg-transparent": true})}>
                         <button.icon className="mr-2 h-4 w-4"/>
                         {button.name}
                     </Button>
