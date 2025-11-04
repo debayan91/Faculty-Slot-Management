@@ -104,6 +104,24 @@
         }
       },
       "required": ["day", "slots"]
+    },
+    "AuthorizedEmail": {
+      "title": "Authorized Email",
+      "description": "Represents an email address that is authorized to access the application.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The authorized email address."
+        },
+        "addedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the email was added."
+        }
+      },
+      "required": ["email"]
     }
   },
   "auth": {
@@ -121,6 +139,10 @@
     "/schedule_templates/{day}": {
       "schema": { "$ref": "#/entities/ScheduleTemplate" },
       "description": "Stores the fixed schedule templates for each day of the week."
+    },
+    "/authorized_emails/{docId}": {
+        "schema": { "$ref": "#/entities/AuthorizedEmail" },
+        "description": "A list of email addresses authorized to use the app. The document ID can be the email address itself for easy lookup."
     }
   }
 }

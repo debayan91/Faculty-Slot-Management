@@ -1,3 +1,4 @@
+
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
@@ -7,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Header } from "@/components/header";
 import { FirebaseClientProvider } from "@/firebase";
 import { AdminProvider } from "@/context/AdminProvider";
+import { AuthGuard } from "@/components/auth-guard";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -33,9 +35,11 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <AdminProvider>
-              <Header />
-              {children}
-              <Toaster />
+              <AuthGuard>
+                <Header />
+                {children}
+                <Toaster />
+              </AuthGuard>
             </AdminProvider>
           </FirebaseClientProvider>
         </ThemeProvider>
