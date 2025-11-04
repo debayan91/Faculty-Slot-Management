@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/context/AdminProvider';
 import { useFirestore } from '@/firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, query, where, Timestamp, getDocs } from 'firebase/firestore';
-import type { Slot } from '@/lib/types';
+import { collection, query, where, Timestamp, getDocs, orderBy } from 'firebase/firestore';
+import type { Slot, AuthorizedEmail } from '@/lib/types';
 import { format, startOfDay } from 'date-fns';
 import {
   Card,
@@ -16,12 +16,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Loader2, Calendar as CalendarIcon, Trash2, Wand2, CheckCircle, AlertTriangle, AlertCircle } from 'lucide-react';
+import { Loader2, Calendar as CalendarIcon, Trash2, Wand2, CheckCircle, AlertTriangle, AlertCircle, PlusCircle, MailWarning } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { deleteScheduleForDate, generateScheduleForDate, updateSlot } from '@/firebase/firestore/schedule-management';
+import { addAuthorizedEmail, removeAuthorizedEmail } from '@/firebase/firestore/admin';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -75,6 +76,102 @@ const EditableCell = ({ slotId, field, value, onSave }: { slotId: string, field:
       </div>
     );
 };
+
+function AuthorizedUsersManager() {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [newEmail, setNewEmail] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const authEmailsQuery = useMemo(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'authorized_emails'), orderBy('addedAt', 'desc'));
+    }, [firestore]);
+
+    const [authEmailsSnapshot, authEmailsLoading] = useCollection(authEmailsQuery);
+
+    const authorizedEmails = useMemo(() => {
+        if (!authEmailsSnapshot) return [];
+        return authEmailsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AuthorizedEmail));
+    }, [authEmailsSnapshot]);
+
+
+    const handleAddEmail = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!firestore || !newEmail) return;
+
+        setIsSubmitting(true);
+        try {
+            await addAuthorizedEmail(firestore, newEmail);
+            toast({ title: 'Email Added', description: `${newEmail} is now an authorized user.` });
+            setNewEmail('');
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Failed to Add Email', description: error.message });
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    const handleRemoveEmail = async (email: string) => {
+        if (!firestore) return;
+        if (!confirm(`Are you sure you want to remove access for ${email}?`)) return;
+
+        try {
+            await removeAuthorizedEmail(firestore, email);
+            toast({ title: 'Email Removed', description: `${email} is no longer an authorized user.` });
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Failed to Remove Email', description: error.message });
+        }
+    }
+
+    return (
+        <Card className="mt-8">
+            <CardHeader>
+                <CardTitle>Authorized User Management</CardTitle>
+                <CardDescription>Add or remove email addresses that are allowed to access the application.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleAddEmail} className="flex gap-2 mb-6">
+                    <Input
+                        type="email"
+                        placeholder="new.user@example.com"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        disabled={isSubmitting}
+                        required
+                    />
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : <PlusCircle />}
+                        <span className="hidden sm:inline ml-2">Add Email</span>
+                    </Button>
+                </form>
+
+                {authEmailsLoading ? (
+                    <div className="flex justify-center items-center h-24">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                ) : authorizedEmails.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                        <MailWarning className="mx-auto h-12 w-12 mb-2" />
+                        <p>No authorized emails found.</p>
+                        <p className="text-sm">Add an email to get started.</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
+                        {authorizedEmails.map(emailDoc => (
+                            <div key={emailDoc.id} className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
+                                <span className="text-sm font-mono">{emailDoc.email}</span>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveEmail(emailDoc.email)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -330,7 +427,8 @@ export default function AdminDashboardPage() {
             )}
         </CardContent>
       </Card>
+      
+      <AuthorizedUsersManager />
     </div>
   );
 }
-

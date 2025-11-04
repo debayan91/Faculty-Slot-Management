@@ -24,10 +24,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
     const isAdminRoute = pathname.startsWith('/admin');
 
-    // **NEW LOGIC**: Prioritize admin access to admin routes
+    // If user is an admin, they have access to admin routes, bypassing other checks.
     if (isAdmin && isAdminRoute) {
-      // If user is an admin and on an admin route, allow access.
-      // This includes the case where they are not logged in as a faculty member.
       return;
     }
 

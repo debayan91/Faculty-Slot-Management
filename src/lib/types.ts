@@ -39,4 +39,9 @@ export interface Slot {
   booked_by: string | null; // The faculty's user ID (uid)
 }
 
-    
+// Represents an authorized email document
+export interface AuthorizedEmail {
+    id: string; // The document ID (email address)
+    email: string;
+    addedAt: any; // Firestore Timestamp
+}
