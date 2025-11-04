@@ -103,8 +103,8 @@ export function Header() {
       <div className="container flex h-20 max-w-screen-2xl items-center">
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Image src="/logo-dark.png" alt="Logo" width={32} height={32} className="dark:hidden" />
-            <Image src="/logo-light.png" alt="Logo" width={32} height={32} className="hidden dark:block" />
+            <Image src="/unnamed.png" alt="Logo" width={32} height={32} className="dark:hidden filter grayscale invert" />
+            <Image src="/unnamed.png" alt="Logo" width={32} height={32} className="hidden dark:block filter grayscale brightness-200" />
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
