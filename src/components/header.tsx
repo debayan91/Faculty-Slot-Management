@@ -36,6 +36,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/context/AdminProvider";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
+import { Input } from "./ui/input";
 
 export function Header() {
   const auth = useAuth();
@@ -204,10 +205,10 @@ export function Header() {
                     </Button>
                 ))}
             </div>
-            <Button variant="ghost" size="icon">
-                <Search className="h-4 w-4"/>
-                <span className="sr-only">Search</span>
-            </Button>
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search..." className="pl-9 h-8 w-48 md:w-64" />
+            </div>
         </div>
       </nav>
     </header>
