@@ -7,7 +7,7 @@ import { useUser } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 
 // List of routes that are publicly accessible or part of the auth flow
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/unauthorized'];
+const PUBLIC_ROUTES = ['/', '/login', '/signup', '/unauthorized', '/admin/auth'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isAuthorized } = useUser();
@@ -25,6 +25,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       // User is logged in and authorized
       // If they are on a public page (like /login or /unauthorized), redirect to home
       if (isPublicRoute && pathname !== '/') {
+        // Exception: allow authorized users to still access admin auth
+        if (pathname === '/admin/auth') return;
         router.push('/');
       }
     } else if (user && !isAuthorized) {

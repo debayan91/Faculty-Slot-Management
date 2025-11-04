@@ -152,7 +152,7 @@ export function Header() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button asChild variant="outline" onClick={() => router.push('/admin/auth')}>
+              <Button variant="outline" onClick={() => router.push('/admin/auth')}>
                 <Link href="/admin/auth">
                   <UserCog className="mr-2 h-4 w-4" />
                   Admin
@@ -165,5 +165,3 @@ export function Header() {
     </header>
   );
 }
-
-    
