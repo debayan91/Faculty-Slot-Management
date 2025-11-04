@@ -16,11 +16,11 @@ import {
   UserCog,
   Home,
   DatabaseZap,
-  LayoutDashboard,
-  BarChart3,
   FileText,
-  Settings,
-  HelpCircle,
+  CalendarCheck,
+  Target,
+  FilePlus,
+  Search,
   XCircle,
 } from "lucide-react";
 import {
@@ -88,12 +88,10 @@ export function Header() {
   };
 
   const navButtons = [
-    { name: "Dashboard", icon: LayoutDashboard },
-    { name: "Analytics", icon: BarChart3 },
-    { name: "Reports", icon: FileText },
-    { name: "Settings", icon: Settings },
-    { name: "Profile", icon: UserIcon },
-    { name: "Help", icon: HelpCircle },
+    { name: "Documents for DCM", icon: FileText },
+    { name: "Monthly Target", icon: Target },
+    { name: "Claim documents", icon: FilePlus },
+    { name: "Slot booking for DCM", icon: CalendarCheck },
   ];
 
   return (
@@ -197,7 +195,7 @@ export function Header() {
       </div>
       {/* Secondary Navbar */}
       <nav className="border-t border-border/40">
-        <div className="container flex h-12 max-w-screen-2xl items-center">
+        <div className="container flex h-12 max-w-screen-2xl items-center justify-between">
             <div className="flex items-center space-x-2">
                 {navButtons.map((button) => (
                     <Button key={button.name} variant="ghost" size="sm" className="h-8">
@@ -206,6 +204,10 @@ export function Header() {
                     </Button>
                 ))}
             </div>
+            <Button variant="ghost" size="icon">
+                <Search className="h-4 w-4"/>
+                <span className="sr-only">Search</span>
+            </Button>
         </div>
       </nav>
     </header>
