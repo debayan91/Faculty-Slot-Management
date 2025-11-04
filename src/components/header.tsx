@@ -2,7 +2,7 @@
 'use client';
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { useAuth, useUser } from "@/firebase";
 import { ThemeToggle } from "./theme-toggle";
@@ -16,6 +16,8 @@ import {
   UserCog,
   Home,
   DatabaseZap,
+  ArrowLeftOnRectangleIcon,
+  XCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,8 +37,9 @@ export function Header() {
   const auth = useAuth();
   const { user, faculty } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
-  const { isAdmin, setIsAdmin } = useAdmin();
+  const { isAdmin, setIsAdmin, previousPath, setPreviousPath } = useAdmin();
 
   const handleSignOut = async () => {
     try {
@@ -55,15 +58,22 @@ export function Header() {
 
   const handleAdminToggle = (isChecked: boolean) => {
     if (isChecked) {
-      // If turning ON, navigate to admin auth page
+      // If turning ON, save current path and navigate to admin auth page
+      setPreviousPath(pathname);
       router.push('/admin/auth');
     } else {
-      // If turning OFF, deactivate admin and go home
+      // If turning OFF, deactivate admin and go home or to previous path
       setIsAdmin(false);
       toast({ title: "Admin Mode Deactivated" });
-      router.push('/');
+      router.push(previousPath || '/');
     }
   };
+  
+  const handleExitAdminMode = () => {
+      setIsAdmin(false);
+      toast({ title: "Admin Mode Deactivated" });
+      router.push(previousPath || '/');
+  }
 
   const getInitials = (name: string) => {
     const names = name.split(" ");
@@ -84,18 +94,27 @@ export function Header() {
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <ThemeToggle />
+          {isAdmin && (
+            <Button variant="outline" size="sm" onClick={handleExitAdminMode}>
+                <XCircle className="mr-2 h-4 w-4" />
+                Exit Admin Mode
+            </Button>
+          )}
+
           {user ? (
             <>
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="admin-mode-switch" className="text-sm font-medium">
-                  Admin
-                </Label>
-                <Switch
-                  id="admin-mode-switch"
-                  checked={isAdmin}
-                  onCheckedChange={handleAdminToggle}
-                />
-              </div>
+              {!isAdmin && (
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="admin-mode-switch" className="text-sm font-medium">
+                    Admin
+                  </Label>
+                  <Switch
+                    id="admin-mode-switch"
+                    checked={isAdmin}
+                    onCheckedChange={handleAdminToggle}
+                  />
+                </div>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8">
@@ -150,7 +169,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
-          ) : (
+          ) : !isAdmin && (
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
                 <Link href="/admin/auth">
