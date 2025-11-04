@@ -37,7 +37,7 @@ export default function RootLayout({
             <AdminProvider>
               <AuthGuard>
                 <Header />
-                {children}
+                <div className="pt-8">{children}</div>
                 <Toaster />
               </AuthGuard>
             </AdminProvider>
