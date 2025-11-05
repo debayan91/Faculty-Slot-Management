@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -95,6 +96,8 @@ export function Header() {
     { name: "Claim documents", icon: FilePlus, href: "/claim-documents" },
     { name: "Slot booking for DCM", icon: CalendarCheck, href: "/slot-booking-for-dcm" },
   ];
+  
+  const isLoginPage = pathname === '/' && !user;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/50 backdrop-blur-xl">
@@ -183,7 +186,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
-          ) : !isAdmin && (
+          ) : !isAdmin && !isLoginPage && (
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
                 <Link href="/admin/auth">
@@ -196,24 +199,26 @@ export function Header() {
         </div>
       </div>
       {/* Secondary Navbar */}
-      <nav className="border-b border-border/40">
-        <div className="container flex h-12 max-w-screen-2xl items-center justify-between">
-            <div className="flex items-center space-x-2">
-                {navButtons.map((button) => (
-                  <Button key={button.name} variant="ghost" size="sm" className={cn("h-8 no-shadow", {"bg-transparent": true})} asChild>
-                    <Link href={button.href}>
-                        <button.icon className="mr-2 h-4 w-4"/>
-                        {button.name}
-                    </Link>
-                  </Button>
-                ))}
-            </div>
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search..." className="pl-9 h-8 w-48 md:w-64 no-shadow" />
-            </div>
-        </div>
-      </nav>
+      {!isLoginPage && (
+        <nav className="border-b border-border/40">
+          <div className="container flex h-12 max-w-screen-2xl items-center justify-between">
+              <div className="flex items-center space-x-2">
+                  {navButtons.map((button) => (
+                    <Button key={button.name} variant="ghost" size="sm" className={cn("h-8 no-shadow", {"bg-transparent": true})} asChild>
+                      <Link href={button.href}>
+                          <button.icon className="mr-2 h-4 w-4"/>
+                          {button.name}
+                      </Link>
+                    </Button>
+                  ))}
+              </div>
+              <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input placeholder="Search..." className="pl-9 h-8 w-48 md:w-64 no-shadow" />
+              </div>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
