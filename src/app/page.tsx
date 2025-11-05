@@ -2,13 +2,14 @@
 "use client";
 
 import { useUser } from "@/firebase";
-import CourseRegistration from "@/components/course-registration";
 import LoginForm from "@/components/login-form";
 import { Loader2 } from "lucide-react";
 import { BookOpenCheck } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const { user, loading } = useUser();
+  const { user, loading, faculty } = useUser();
 
   if (loading) {
     return (
@@ -45,8 +46,24 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-start p-4 md:p-8">
-      <CourseRegistration />
+    <main className="flex flex-col items-center justify-center -mt-24 text-center">
+        <div className="card-container w-full max-w-2xl mx-auto p-8">
+            <BookOpenCheck className="h-20 w-20 text-primary mx-auto mb-6" />
+            <h1 className="main-heading text-4xl">
+                Welcome, <span className="gradient-text">{faculty?.name || user?.email}</span>!
+            </h1>
+            <p className="sub-heading text-xl mt-2">
+                You are logged into the Faculty Slot Management Portal.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg">
+                    <Link href="/slot-booking-for-dcm">Book a Slot</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg">
+                    <Link href="/my-booked-slots">View My Bookings</Link>
+                </Button>
+            </div>
+        </div>
     </main>
   );
 }
