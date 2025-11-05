@@ -23,11 +23,18 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
+        protocol: 'https'
+        ,
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'd2lk14jtvqry1q.cloudfront.net',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
