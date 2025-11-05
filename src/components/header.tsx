@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from "next/link";
@@ -91,10 +90,10 @@ export function Header() {
   };
 
   const navButtons = [
-    { name: "Documents for DCM", icon: FileText },
-    { name: "Monthly Target", icon: Target },
-    { name: "Claim documents", icon: FilePlus },
-    { name: "Slot booking for DCM", icon: CalendarCheck },
+    { name: "Documents for DCM", icon: FileText, href: "/documents-for-dcm" },
+    { name: "Monthly Target", icon: Target, href: "/monthly-target" },
+    { name: "Claim documents", icon: FilePlus, href: "/claim-documents" },
+    { name: "Slot booking for DCM", icon: CalendarCheck, href: "/slot-booking-for-dcm" },
   ];
 
   return (
@@ -103,8 +102,8 @@ export function Header() {
       <div className="container flex h-20 max-w-screen-2xl items-center">
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Image src="/unnamed.png" alt="Logo" width={32} height={32} className="dark:hidden filter grayscale invert" />
-            <Image src="/unnamed.png" alt="Logo" width={32} height={32} className="hidden dark:block filter grayscale brightness-200" />
+            <Image src="/unnamed.png" alt="Logo" width={150} height={80} className="dark:hidden filter grayscale invert brightness-[-10%]" />
+            <Image src="/unnamed.png" alt="Logo" width={150} height={80} className="hidden dark:block filter grayscale brightness-[300%]" />
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
@@ -201,10 +200,12 @@ export function Header() {
         <div className="container flex h-12 max-w-screen-2xl items-center justify-between">
             <div className="flex items-center space-x-2">
                 {navButtons.map((button) => (
-                    <Button key={button.name} variant="ghost" size="sm" className={cn("h-8 no-shadow", {"bg-transparent": true})}>
+                  <Button key={button.name} variant="ghost" size="sm" className={cn("h-8 no-shadow", {"bg-transparent": true})} asChild>
+                    <Link href={button.href}>
                         <button.icon className="mr-2 h-4 w-4"/>
                         {button.name}
-                    </Button>
+                    </Link>
+                  </Button>
                 ))}
             </div>
             <div className="relative">
