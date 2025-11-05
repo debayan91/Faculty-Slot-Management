@@ -1,4 +1,3 @@
-
 'use client';
 
 import CourseRegistration from "@/components/course-registration";

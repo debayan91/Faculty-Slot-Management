@@ -105,8 +105,8 @@ export function Header() {
       <div className="container flex h-[15vh] max-w-screen-2xl items-center">
         <div className="mr-4 flex items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={150} height={80} className=" filter grayscale invert -brightness-100 dark:hidden" />
-            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={150} height={80} className="hidden dark:block filter grayscale brightness-[300%]" />
+            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={250} height={80} className="dark:hidden" />
+            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={250} height={80} className="hidden dark:block filter grayscale brightness-[900%]" />
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
