@@ -13,7 +13,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen -mt-24">
+      <div className="flex items-center justify-center min-h-[calc(100vh-128px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -21,10 +21,10 @@ export default function Home() {
 
   if (!user) {
     return (
-      <main className="flex-grow flex items-center justify-center -mt-24">
+      <main className="flex-grow flex items-center justify-center min-h-[calc(100vh-128px)]">
         <div className="container mx-auto p-4">
           <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="flex pt-[20%] flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center">
               <LoginForm />
             </div>
             <div className="hidden md:flex flex-col items-start text-left">
@@ -46,7 +46,7 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center -mt-24 text-center">
+    <main className="flex flex-col items-center justify-center text-center flex-grow min-h-[calc(100vh-128px)]">
         <div className="card-container w-full max-w-2xl mx-auto p-8">
             <BookOpenCheck className="h-20 w-20 text-primary mx-auto mb-6" />
             <h1 className="main-heading text-4xl">
