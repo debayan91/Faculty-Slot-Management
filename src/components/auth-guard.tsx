@@ -21,7 +21,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return; // Wait until user state is determined
     }
 
-    const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/auth'); // /auth for login/signup
+    const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
     const isAdminRoute = pathname.startsWith('/admin');
 
     // If user is an admin, they have access to admin routes, bypassing other checks.
@@ -35,9 +35,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // If user is logged in and authorized
     if (user && isAuthorized) {
-      // If they are on a public auth page (like / or /unauthorized), redirect to booking page
-      if (pathname === '/' || pathname === '/unauthorized') {
-        router.push('/slot-booking-for-dcm');
+      // If they are on the unauthorized page, redirect away.
+      // NOTE: The redirect from '/' is removed to allow the new homepage to be displayed.
+      if (pathname === '/unauthorized') {
+        router.push('/');
       }
       return;
     }
@@ -69,7 +70,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }
   
   // This logic prevents content "flickering" while redirects are in flight.
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/auth');
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAdminRoute = pathname.startsWith('/admin');
   
   if (isAdmin && isAdminRoute) {
