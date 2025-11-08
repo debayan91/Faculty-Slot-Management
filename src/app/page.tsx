@@ -4,12 +4,10 @@
 import { useUser } from "@/firebase";
 import LoginForm from "@/components/login-form";
 import { Loader2 } from "lucide-react";
-import { BookOpenCheck } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function Home() {
-  const { user, loading, faculty } = useUser();
+  const { user, loading } = useUser();
 
   if (loading) {
     return (
@@ -28,10 +26,12 @@ export default function Home() {
               <LoginForm />
             </div>
             <div className="hidden md:flex flex-col items-start text-left">
-               <BookOpenCheck className="h-16 w-16 text-primary mb-4" />
-              <h1 className="text-4xl font-bold tracking-tight mb-4">
-                Welcome to the Faculty Slot Management Portal
-              </h1>
+                <div className="flex items-center gap-4 mb-4">
+                    <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={100} height={40} className="dark:filter dark:grayscale dark:brightness-[900%]" />
+                    <h1 className="text-4xl font-bold tracking-tight">
+                        Faculty Slot Management Portal
+                    </h1>
+                </div>
               <p className="text-lg text-muted-foreground">
                 Please sign in to manage your course schedules, book available slots, and view your timetable.
               </p>
@@ -45,24 +45,17 @@ export default function Home() {
     );
   }
 
+  // This is the view for logged-in users, which you said you will build out later.
+  // For now, it shows a simple welcome message.
   return (
-    <main className="flex flex-col items-center justify-center text-center flex-grow min-h-[calc(100vh-128px)]">
-        <div className="card-container w-full max-w-2xl mx-auto p-8">
-            <BookOpenCheck className="h-20 w-20 text-primary mx-auto mb-6" />
-            <h1 className="main-heading text-4xl">
-                Welcome, <span className="gradient-text">{faculty?.name || user?.email}</span>!
-            </h1>
-            <p className="sub-heading text-xl mt-2">
-                You are logged into the Faculty Slot Management Portal.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild size="lg">
-                    <Link href="/slot-booking-for-dcm">Book a Slot</Link>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                    <Link href="/my-booked-slots">View My Bookings</Link>
-                </Button>
-            </div>
+     <main className="flex-grow flex items-center justify-center min-h-[calc(100vh-128px)]">
+        <div className="container mx-auto p-4 text-center">
+             <h1 className="text-4xl font-bold tracking-tight mb-4">
+                Welcome, {user.displayName || user.email}!
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                You are successfully logged in.
+              </p>
         </div>
     </main>
   );
