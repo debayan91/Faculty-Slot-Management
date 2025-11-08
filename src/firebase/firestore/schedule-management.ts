@@ -1,122 +1,147 @@
 
-'use client';
-
 import {
-  collection,
-  query,
-  where,
-  getDocs,
-  writeBatch,
-  Timestamp,
-  doc,
-  updateDoc,
-  type Firestore,
-  getDoc,
+    type Firestore,
+    doc,
+    getDoc,
+    collection,
+    writeBatch,
+    Timestamp,
+    runTransaction,
+    query,
+    where,
+    getDocs,
+    deleteDoc,
 } from 'firebase/firestore';
-import { parse } from 'date-fns';
-import type { Slot, ScheduleTemplate } from '@/lib/types';
+import { ScheduleTemplate } from '@/lib/types';
+import { format, parse } from 'date-fns';
 
 /**
- * Generates and saves a full day's schedule to the 'slots' collection
- * based on a template from the `schedule_templates` collection.
- * It will not create duplicates if slots for that day already exist.
+ * Generates a schedule for a given date by creating individual slot documents
+ * based on the template for that day of the week.
  */
 export async function generateScheduleForDate(db: Firestore, date: Date) {
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const dayName = dayNames[date.getDay()];
-
-  // 1. Check if a template for this day exists
-  const templateRef = doc(db, 'schedule_templates', dayName);
-  const templateSnap = await getDoc(templateRef);
-
-  if (!templateSnap.exists()) {
-    throw new Error(`Schedule template for '${dayName}' not found.`);
-  }
-  const template = templateSnap.data() as Omit<ScheduleTemplate, 'id'>;
-
-
-  // 2. Check if slots for this date already exist to prevent duplication
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  const existingSlotsQuery = query(
-    collection(db, 'slots'),
-    where('slot_datetime', '>=', Timestamp.fromDate(startOfDay)),
-    where('slot_datetime', '<=', Timestamp.fromDate(endOfDay))
-  );
-
-  const existingSlotsSnapshot = await getDocs(existingSlotsQuery);
-  if (!existingSlotsSnapshot.empty) {
-    throw new Error(`Schedule already exists for ${date.toLocaleDateString()}. Found ${existingSlotsSnapshot.size} slots.`);
-  }
-
-  // 3. Create a batch write operation from the template
-  const batch = writeBatch(db);
-
-  template.slots.forEach(templateSlot => {
-    const startTime = parse(templateSlot.startTime, 'HH:mm', new Date());
+    const dayOfWeek = format(date, 'EEEE').toLowerCase();
+    const templateRef = doc(db, 'schedule_templates', dayOfWeek);
     
-    const slotDateTime = new Date(date);
-    slotDateTime.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+    try {
+        const templateSnap = await getDoc(templateRef);
 
-    const newSlot: Omit<Slot, 'id'> = {
-      slot_datetime: Timestamp.fromDate(slotDateTime),
-      duration_minutes: templateSlot.duration,
-      slot_code: templateSlot.slot_code, // This was the missing field
-      course_name: null, 
-      faculty_name: null,
-      room_number: null,
-      is_bookable: false,
-      is_booked: false,
-      booked_by: null,
-    };
+        if (!templateSnap.exists()) {
+            return {
+                success: false,
+                message: `Template for '${dayOfWeek}' not found. Please create it first.`
+            };
+        }
 
-    const newSlotRef = doc(collection(db, 'slots'));
-    batch.set(newSlotRef, newSlot);
-  });
+        const template = templateSnap.data() as ScheduleTemplate;
 
-  // 4. Commit the batch
-  await batch.commit();
-  return { success: true, message: `Successfully generated ${template.slots.length} slots for ${dayName}.`};
+        if (!Array.isArray(template.slots) || template.slots.length === 0) {
+            return {
+                success: false,
+                message: `Template '${dayOfWeek}' is empty or invalid.`
+            };
+        }
+
+        // Check if slots already exist for this date to prevent duplicates
+        const startOfDay = new Date(date.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+        
+        const existingSlotsQuery = query(
+            collection(db, 'slots'),
+            where('slot_datetime', '>=', startOfDay),
+            where('slot_datetime', '<=', endOfDay)
+        );
+
+        const existingSlotsSnap = await getDocs(existingSlotsQuery);
+        if (!existingSlotsSnap.empty) {
+            return {
+                success: false,
+                message: `Schedule for ${format(date, 'yyyy-MM-dd')} already exists. Delete it first to regenerate.`
+            };
+        }
+
+        // Create a new batch write
+        const batch = writeBatch(db);
+
+        template.slots.forEach(templateSlot => {
+            const [hours, minutes] = templateSlot.startTime.split(':').map(Number);
+            const slotDateTime = new Date(date);
+            slotDateTime.setHours(hours, minutes, 0, 0);
+
+            const newSlotDocRef = doc(collection(db, 'slots'));
+            
+            batch.set(newSlotDocRef, {
+                slot_datetime: Timestamp.fromDate(slotDateTime),
+                duration_minutes: templateSlot.duration || 60,
+                is_bookable: templateSlot.isBookable !== undefined ? templateSlot.isBookable : false,
+                is_booked: false,
+                booked_by: null,
+                course_name: templateSlot.courseName || null,
+                faculty_name: templateSlot.facultyName || null,
+                room_number: templateSlot.room || null,
+                slot_code: templateSlot.slot_code || null,
+            });
+        });
+
+        await batch.commit();
+
+        return { success: true, message: `Successfully generated ${template.slots.length} slots.` };
+
+    } catch (error: any) {
+        console.error("Error in generateScheduleForDate:", error);
+        return { success: false, message: 'An unexpected error occurred: ' + error.message };
+    }
 }
 
 /**
- * Deletes all slot documents for a given date.
- * USE WITH CAUTION.
+ * Deletes all slot documents within a given date range.
  */
-export async function deleteScheduleForDate(db: Firestore, date: Date) {
-  const startOfDay = new Date(date);
-  startOfDay.setHours(0, 0, 0, 0);
+export async function deleteSchedulesByDateRange(db: Firestore, startDate: Date, endDate: Date) {
+    const start = new Date(startDate.setHours(0,0,0,0));
+    const end = new Date(endDate.setHours(23,59,59,999));
 
-  const endOfDay = new Date(date);
-  endOfDay.setHours(23, 59, 59, 999);
+    const slotsRef = collection(db, 'slots');
+    const q = query(slotsRef, where('slot_datetime', '>=', start), where('slot_datetime', '<=', end));
 
-  const q = query(
-    collection(db, 'slots'),
-    where('slot_datetime', '>=', Timestamp.fromDate(startOfDay)),
-    where('slot_datetime', '<=', Timestamp.fromDate(endOfDay))
-  );
+    try {
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+            return { success: true, message: 'No slots found in the selected date range to delete.' };
+        }
 
-  const querySnapshot = await getDocs(q);
-  if (querySnapshot.empty) {
-    return { success: true, message: 'No slots found to delete.' };
-  }
+        const batch = writeBatch(db);
+        querySnapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
 
-  const batch = writeBatch(db);
-  querySnapshot.forEach((doc) => {
-    batch.delete(doc.ref);
-  });
-
-  await batch.commit();
-  return { success: true, message: `Deleted ${querySnapshot.size} slots.` };
+        await batch.commit();
+        return { success: true, message: `Successfully deleted ${querySnapshot.size} slots.` };
+    } catch(error: any) {
+        console.error("Error deleting slots:", error);
+        return { success: false, message: 'An error occurred during deletion: ' + error.message };
+    }
 }
 
 /**
- * Updates a single slot document with new data.
+ * Retrieves all slot documents within a given date range.
  */
-export async function updateSlot(db: Firestore, slotId: string, newData: Partial<Slot>) {
-  const slotRef = doc(db, 'slots', slotId);
-  await updateDoc(slotRef, newData);
+export async function getSchedulesByDateRange(db: Firestore, startDate: Date, endDate: Date) {
+    const start = new Date(startDate.setHours(0,0,0,0));
+    const end = new Date(endDate.setHours(23,59,59,999));
+
+    const slotsRef = collection(db, 'slots');
+    const q = query(
+        slotsRef,
+        where('slot_datetime', '>=', start),
+        where('slot_datetime', '<=', end),
+        orderBy('slot_datetime', 'asc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const slots: any[] = [];
+    querySnapshot.forEach(doc => {
+        slots.push({ id: doc.id, ...doc.data() });
+    });
+
+    return slots;
 }

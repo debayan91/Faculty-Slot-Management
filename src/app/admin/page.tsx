@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/context/AdminProvider';
 import { useFirestore } from '@/firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, query, where, Timestamp, getDocs, orderBy } from 'firebase/firestore';
-import type { Slot, AuthorizedEmail } from '@/lib/types';
+import { collection, query, where, Timestamp, getDocs, orderBy, doc, updateDoc } from 'firebase/firestore';
+import type { Slot, AuthorizedEmail, ScheduleTemplate } from '@/lib/types';
 import { format, startOfDay } from 'date-fns';
 import {
   Card,
@@ -21,7 +21,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { deleteScheduleForDate, generateScheduleForDate, updateSlot } from '@/firebase/firestore/schedule-management';
+import { generateScheduleForDate, deleteSchedulesByDateRange } from '@/firebase/firestore/schedule-management';
 import { addAuthorizedEmail, removeAuthorizedEmail } from '@/firebase/firestore/admin';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -33,17 +33,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Link from 'next/link';
 
@@ -181,10 +170,10 @@ export default function AdminDashboardPage() {
 
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [isLoading, setIsLoading] = useState(false);
+  
   const [templatesExist, setTemplatesExist] = useState(true);
   const [checkingTemplates, setCheckingTemplates] = useState(true);
 
-  // Check for templates on mount
   useEffect(() => {
     const checkTemplates = async () => {
       if (!firestore) return;
@@ -194,7 +183,7 @@ export default function AdminDashboardPage() {
         setTemplatesExist(!snapshot.empty);
       } catch (e) {
         console.error("Error checking for templates:", e);
-        setTemplatesExist(false); // Assume they don't exist on error
+        setTemplatesExist(false);
       } finally {
         setCheckingTemplates(false);
       }
@@ -206,17 +195,24 @@ export default function AdminDashboardPage() {
   const slotsQuery = useMemo(() => {
     if (!firestore || !date) return null;
     const start = startOfDay(date);
-    const end = new Date(start);
+    const end = new Date(start.getTime());
     end.setHours(23, 59, 59, 999);
 
     return query(
-      collection(firestore, 'slots'),
-      where('slot_datetime', '>=', Timestamp.fromDate(start)),
-      where('slot_datetime', '<=', Timestamp.fromDate(end))
+        collection(firestore, 'slots'), 
+        where('slot_datetime', '>=', Timestamp.fromDate(start)),
+        where('slot_datetime', '<=', Timestamp.fromDate(end)),
+        orderBy('slot_datetime', 'asc')
     );
   }, [firestore, date]);
 
-  const [slotsSnapshot, slotsLoading, slotsError] = useCollection(slotsQuery);
+  const [slotsSnapshot, slotsLoading] = useCollection(slotsQuery);
+
+  const slots: Slot[] = useMemo(() => {
+    if (!slotsSnapshot || slotsSnapshot.docs.length === 0) return [];
+    return slotsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Slot));
+  }, [slotsSnapshot]);
+
 
   useEffect(() => {
     if (!adminLoading && !isAdmin) {
@@ -224,52 +220,49 @@ export default function AdminDashboardPage() {
     }
   }, [isAdmin, adminLoading, router]);
 
-  const slots: Slot[] = useMemo(() => {
-    if (!slotsSnapshot) return [];
-    return slotsSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
-        .sort((a, b) => (a.slot_datetime as any).toMillis() - (b.slot_datetime as any).toMillis());
-  }, [slotsSnapshot]);
-
   const handleGenerateSchedule = async () => {
     if (!firestore || !date) return;
 
     setIsLoading(true);
-    toast({ title: 'Generating Schedule...', description: `Creating slots for ${date.toLocaleDateString()}`});
+    toast({ title: 'Generating Schedule...', description: `Creating slots for ${format(date, "PPP")}`});
 
-    try {
-      await generateScheduleForDate(firestore, date);
-      toast({ title: 'Schedule Generated!', description: 'Slots have been created successfully.', variant: 'default' });
-    } catch (error: any) {
-      console.error("Error generating schedule:", error);
-      toast({ variant: 'destructive', title: 'Generation Failed', description: error.message });
-    } finally {
-      setIsLoading(false);
+    const result = await generateScheduleForDate(firestore, date);
+
+    if (result.success) {
+      toast({ title: 'Schedule Generated!', description: result.message });
+    } else {
+      toast({ variant: 'destructive', title: 'Generation Failed', description: result.message });
     }
+    
+    setIsLoading(false);
   };
 
   const handleDeleteSchedule = async () => {
     if (!firestore || !date) return;
 
-    setIsLoading(true);
-    toast({ title: 'Deleting Schedule...', description: `Removing all slots for ${date.toLocaleDateString()}`});
+    const confirmed = confirm(`Are you sure you want to delete the schedule for ${format(date, "PPP")}? This action cannot be undone.`);
+    if (!confirmed) return;
 
-    try {
-        await deleteScheduleForDate(firestore, date);
-        toast({ title: 'Schedule Deleted', description: 'All slots for the selected day have been removed.' });
-    } catch(error: any) {
-        console.error("Error deleting schedule:", error);
-        toast({ variant: 'destructive', title: 'Deletion Failed', description: error.message });
-    } finally {
-        setIsLoading(false);
+    setIsLoading(true);
+    toast({ title: 'Deleting Schedule...', description: `Removing schedule for ${format(date, "PPP")}`});
+
+    const result = await deleteSchedulesByDateRange(firestore, startOfDay(date), startOfDay(date));
+
+    if (result.success) {
+        toast({ title: 'Schedule Deleted', description: result.message });
+    } else {
+        toast({ variant: 'destructive', title: 'Deletion Failed', description: result.message });
     }
+
+    setIsLoading(false);
   };
 
   const handleUpdate = async (slotId: string, field: keyof Slot, value: any) => {
     if (!firestore) return;
     try {
-        await updateSlot(firestore, slotId, { [field]: value });
-        toast({ title: 'Slot Updated', description: `The ${field.replace('_', ' ')} has been changed.` });
+        const slotRef = doc(firestore, 'slots', slotId);
+        await updateDoc(slotRef, { [field]: value });
+        toast({ title: 'Slot Updated', description: `The ${String(field).replace('_', ' ')} has been changed.` });
     } catch (error: any) {
         console.error("Error updating slot:", error);
         toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
@@ -285,11 +278,11 @@ export default function AdminDashboardPage() {
   }
 
   if (!isAdmin) {
-    return null; // Redirect is handled by useEffect
+    return null;
   }
-
-  const generationDisabled = isLoading || (slots && slots.length > 0) || !templatesExist;
-  const deletionDisabled = isLoading || !slots || slots.length === 0;
+  
+  const generationDisabled = isLoading || slots.length > 0;
+  const deletionDisabled = isLoading || slots.length === 0;
 
   return (
     <div className="container mx-auto p-4 md:p-8">
@@ -325,42 +318,26 @@ export default function AdminDashboardPage() {
                 <Button onClick={handleGenerateSchedule} disabled={generationDisabled} className="w-full sm:w-auto">
                     <Wand2 className="mr-2 h-4 w-4" /> Generate
                 </Button>
-
-                <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button variant="destructive" disabled={deletionDisabled} className="w-full sm:w-auto">
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete all {slots.length} slots for {date?.toLocaleDateString()}. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteSchedule}>Continue</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                
+                <Button variant="destructive" onClick={handleDeleteSchedule} disabled={deletionDisabled} className="w-full sm:w-auto">
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                </Button>
 
             </div>
         </CardHeader>
         <CardContent>
-            {!templatesExist ? (
-              <Alert variant="destructive" className="mb-6">
+          {!templatesExist && !checkingTemplates && (
+              <Alert variant="secondary" className="mb-6">
                   <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Action Required: Setup Schedule Templates</AlertTitle>
-                  <AlertDescription>
-                    The schedule templates have not been created in the database yet. The "Generate" function is disabled until the templates are seeded.
-                    <Button asChild variant="link" className="p-0 h-auto ml-1">
-                      <Link href="/admin/templates">Go to Template Manager to fix this.</Link>
+                  <AlertTitle>No Schedule Templates Found</AlertTitle>
+                  <AlertDescription className="flex flex-col items-start gap-3 mt-2">
+                    <span>Your `schedule_templates` collection in Firestore is empty. You must create templates for each day of the week for the "Generate" function to work.</span>
+                    <Button asChild variant="outline" className="p-2 h-auto">
+                      <Link href="/admin/templates">Go to Template Manager</Link>
                     </Button>
                   </AlertDescription>
               </Alert>
-            ) : null}
+            )}
 
             {slotsLoading ? (
                 <div className="flex items-center justify-center h-64">
@@ -370,8 +347,8 @@ export default function AdminDashboardPage() {
                  <div className="text-center py-16">
                     <h3 className="text-xl font-semibold">No Schedule Found</h3>
                     <p className="text-muted-foreground mt-2">
-                        There is no schedule generated for {date?.toLocaleDateString()}.<br/>
-                        {templatesExist ? 'Click the "Generate" button to create one from the templates.' : 'Please seed the templates first.'}
+                        There is no schedule generated for {date ? format(date, "PPP") : 'the selected date'}.<br/>
+                        {templatesExist ? 'Click the "Generate" button to create one.' : 'Please create day-of-the-week templates first.'}
                     </p>
                  </div>
             ) : (
@@ -379,7 +356,6 @@ export default function AdminDashboardPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px]">Time</TableHead>
-                    <TableHead className="w-[80px]">Code</TableHead>
                     <TableHead>Course Name</TableHead>
                     <TableHead>Assigned Faculty</TableHead>
                     <TableHead>Room</TableHead>
@@ -388,13 +364,10 @@ export default function AdminDashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {slots.map((slot) => (
+                  {slots.map((slot: Slot) => (
                     <TableRow key={slot.id}>
                       <TableCell className="font-medium">
-                        {format(new Date((slot.slot_datetime as any).toDate()), 'p')}
-                      </TableCell>
-                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {slot.slot_code}
+                        {format(slot.slot_datetime.toDate(), 'p')}
                       </TableCell>
                       <TableCell>
                         <EditableCell slotId={slot.id} field="course_name" value={slot.course_name} onSave={handleUpdate} />

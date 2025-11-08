@@ -1,192 +1,164 @@
 
-"use client";
+'use client';
 
-import { useState, useMemo, useEffect } from "react";
-import type { Slot } from "@/lib/types";
-import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIcon, CheckCircle, Loader2 } from "lucide-react";
-import { useFirestore, useUser } from "@/firebase";
-import Link from "next/link";
-import { collection, query, where, Timestamp, orderBy } from "firebase/firestore";
+import { useState, useMemo } from 'react';
+import { useUser } from '@/firebase/auth/use-user';
+import { useFirestore } from '@/firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { bookSlot } from "@/firebase/firestore/slot-booking";
-import { useToast } from "@/hooks/use-toast";
+import { collection, query, where, Timestamp } from 'firebase/firestore';
 import { format, startOfDay } from 'date-fns';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import { useToast } from '@/hooks/use-toast';
+import { bookSlot } from '@/firebase/firestore/slot-booking';
+import type { Slot } from '@/lib/types';
 
-function SlotCard({ slot, onBook, isBookedByOther, facultyName }: { slot: Slot, onBook: (slot: Slot) => void, isBookedByOther: boolean, facultyName: string | null }) {
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Loader2, Calendar as CalendarIcon, CheckCircle, AlertTriangle } from 'lucide-react';
+import Link from 'next/link';
+
+function SlotCard({ slot, onBook, isLoading }: { slot: Slot, onBook: (slotId: string) => void, isLoading: boolean }) {
+    const { faculty } = useUser();
+    const isBookedByCurrentUser = faculty && slot.booked_by === faculty.uid;
+
     return (
-        <div className="course-card flex flex-col sm:flex-row justify-between sm:items-center p-4">
-            <div>
-                 <h3 className="font-medium-theme text-lg text-normal">{slot.course_name || <span className="text-muted-foreground italic">Unnamed Slot</span>}</h3>
-                <p className="text-light text-sm mt-1">
-                    <span className="font-mono text-xs text-muted-foreground mr-2">{slot.slot_code}</span>
-                    {format(new Date((slot.slot_datetime as any).toDate()), 'p')}
-                    {slot.room_number && ` - Room: ${slot.room_number}`}
-                </p>
-                 {isBookedByOther && facultyName && (
-                    <p className="text-xs text-destructive mt-1">Booked by {facultyName}</p>
-                )}
-            </div>
-            <Button 
-                onClick={() => onBook(slot)} 
-                disabled={isBookedByOther}
-                className="mt-2 sm:mt-0"
-                size="sm"
-            >
-                {isBookedByOther ? 'Booked' : 'Book Slot'}
-            </Button>
-        </div>
-    )
+        <Card className={`transition-all ${isBookedByCurrentUser ? 'border-green-500' : ''}`}>
+            <CardHeader>
+                <CardTitle>{slot.courseName || 'Unnamed Course'}</CardTitle>
+                <CardDescription>{format(new Date(slot.slot_datetime.toDate()), 'p')} - {slot.room || 'N/A'}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-between items-center">
+                <div>
+                    {slot.is_booked ? (
+                        <div className="flex items-center gap-2">
+                            <CheckCircle className="text-green-500" />
+                            <span className="text-sm font-semibold">
+                                Booked by {isBookedByCurrentUser ? 'you' : (slot.faculty_name || 'another faculty')}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2 text-yellow-500">
+                            <AlertTriangle />
+                            <span className="text-sm font-semibold">Available</span>
+                        </div>
+                    )}
+                </div>
+                <Button
+                    onClick={() => onBook(slot.id)}
+                    disabled={isLoading || slot.is_booked}
+                    variant={isBookedByCurrentUser ? 'outline' : 'default'}
+                >
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isBookedByCurrentUser ? 'Booked' : 'Book Slot'}
+                </Button>
+            </CardContent>
+        </Card>
+    );
 }
 
 export default function CourseRegistration() {
-  const { user, faculty, loading: userLoading } = useUser();
-  const firestore = useFirestore();
-  const { toast } = useToast();
+    const { user, faculty, loading: userLoading } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
 
-  const [date, setDate] = useState<Date | undefined>(new Date());
-  const [isLoading, setIsLoading] = useState(false);
+    const [date, setDate] = useState<Date | undefined>(new Date());
+    const [bookingSlotId, setBookingSlotId] = useState<string | null>(null); // To track which slot is being booked
 
-  // This query is now aligned with the admin page's query for consistency
-  const slotsQuery = useMemo(() => {
-    if (!firestore || !date) return null;
-    const start = startOfDay(date);
-    const end = new Date(start);
-    end.setHours(23, 59, 59, 999);
+    const slotsQuery = useMemo(() => {
+        if (!firestore || !date) return null;
+        const start = startOfDay(date);
+        const end = new Date(start);
+        end.setHours(23, 59, 59, 999);
 
-    return query(
-      collection(firestore, 'slots'),
-      where('slot_datetime', '>=', Timestamp.fromDate(start)),
-      where('slot_datetime', '<=', Timestamp.fromDate(end))
-    );
-  }, [firestore, date]);
+        return query(
+            collection(firestore, 'slots'),
+            where('slot_datetime', '>=', Timestamp.fromDate(start)),
+            where('slot_datetime', '<=', Timestamp.fromDate(end))
+        );
+    }, [firestore, date]);
 
-  const [slotsSnapshot, slotsLoading, slotsError] = useCollection(slotsQuery);
+    const [slotsSnapshot, slotsLoading, slotsError] = useCollection(slotsQuery);
 
-  // This performs the client-side filtering as per your suggestion
-  const availableSlots: Slot[] = useMemo(() => {
-    if (!slotsSnapshot) return [];
-    return slotsSnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
-        .filter(slot => slot.is_bookable)
-        .sort((a, b) => (a.slot_datetime as any).toMillis() - (b.slot_datetime as any).toMillis());
-  }, [slotsSnapshot]);
+    const availableSlots: Slot[] = useMemo(() => {
+        if (!slotsSnapshot) return [];
+        return slotsSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
+            .filter(slot => slot.is_bookable)
+            .sort((a, b) => a.slot_datetime.toDate().getTime() - b.slot_datetime.toDate().getTime());
+    }, [slotsSnapshot]);
 
-  useEffect(() => {
-    if(slotsError) {
-      console.error("Error fetching available slots:", slotsError);
-      // This toast is helpful for debugging index issues.
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch available slots. An index might be required.' });
+    const handleBookSlot = async (slotId: string) => {
+        if (!firestore || !user || !faculty) {
+            toast({ title: "Error", description: "You must be logged in to book a slot.", variant: "destructive" });
+            return;
+        }
+
+        if (!confirm("Are you sure you want to book this slot?")) return;
+
+        setBookingSlotId(slotId);
+        try {
+            await bookSlot(firestore, slotId, user.uid, faculty.name);
+            toast({ title: "Success!", description: "Slot booked successfully." });
+        } catch (error: any) {
+            console.error("Error booking slot:", error);
+            toast({ title: "Booking Failed", description: error.message, variant: "destructive" });
+        } finally {
+            setBookingSlotId(null);
+        }
+    };
+
+    if (userLoading) {
+        return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin" /></div>;
     }
-  }, [slotsError, toast]);
 
-
-  const handleBookSlot = async (slot: Slot) => {
-    if (!faculty || !user) {
-        toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in as a faculty member to book a slot.' });
-        return;
-    }
-    const formattedTime = format(new Date((slot.slot_datetime as any).toDate()), 'p');
-    const isConfirmed = confirm(
-      `Confirm booking for ${slot.course_name || 'this slot'} at ${formattedTime}?`
-    );
-    if (isConfirmed) {
-      setIsLoading(true);
-      try {
-        await bookSlot(firestore, slot.id, user.uid, faculty.name);
-        toast({ title: 'Slot Booked!', description: `You have successfully booked ${slot.course_name}.` });
-      } catch (error: any)
-      {
-        console.error("Failed to book slot:", error);
-        toast({ variant: 'destructive', title: 'Booking Failed', description: error.message });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  if (userLoading) {
     return (
-      <div className="flex items-center justify-center h-screen -mt-24">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
+        <Card>
+            <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <CardTitle>Book an Available Slot</CardTitle>
+                    <CardDescription>Welcome, {faculty?.name || user?.email}!</CardDescription>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                     <Button asChild variant="outline" className="w-full sm:w-auto">
+                        <Link href="/my-booked-slots">My Booked Slots</Link>
+                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant={"outline"} className="w-full sm:w-[280px] justify-start text-left font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date ? format(date, "PPP") : <span>Pick a date</span>}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {slotsLoading ? (
+                    <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                ) : slotsError ? (
+                    <p className="text-destructive">Error loading slots. Please try again later.</p>
+                ) : availableSlots.length === 0 ? (
+                    <div className="text-center py-16">
+                        <h3 className="text-xl font-semibold">No Available Slots</h3>
+                        <p className="text-muted-foreground mt-2">There are no bookable slots for this day. Please select another date.</p>
+                     </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {availableSlots.map(slot => (
+                            <SlotCard
+                                key={slot.id}
+                                slot={slot}
+                                onBook={handleBookSlot}
+                                isLoading={bookingSlotId === slot.id}
+                            />
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
-  }
-
-  if (!user || !faculty) {
-    return (
-      <div className="flex justify-center items-center h-screen -mt-24">
-        <div className="text-center">
-          <h1 className="main-heading">Welcome to the Faculty Portal</h1>
-          <p className="sub-heading">Please <Link href="/" className="underline text-primary">log in</Link> to view and book course slots.</p>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="card-container w-full max-w-4xl mx-auto">
-      {(isLoading) && (
-        <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-50 rounded-lg">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-        <div>
-          <h1 className="main-heading">
-            Book an Available <span className="gradient-text">Slot</span>
-          </h1>
-          <h2 className="sub-heading">Welcome, <span className="gradient-text">{faculty?.name || user?.email}</span>!</h2>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-2">
-            <Popover>
-                <PopoverTrigger asChild>
-                <Button
-                    variant={"outline"}
-                    className="w-full sm:w-[240px] justify-start text-left font-normal"
-                >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "PPP") : <span>Pick a date</span>}
-                </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                />
-                </PopoverContent>
-            </Popover>
-            <Button asChild>
-                <Link href="/my-booked-slots">My Booked Slots</Link>
-            </Button>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {slotsLoading ? (
-            <div className="flex items-center justify-center py-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        ) : availableSlots.length > 0 ? availableSlots.map(slot => (
-            <SlotCard 
-                key={slot.id} 
-                slot={slot} 
-                onBook={handleBookSlot}
-                isBookedByOther={slot.is_booked}
-                facultyName={slot.faculty_name}
-            />
-        )) : (
-            <div className="text-center py-10">
-                <p className="text-muted-foreground">No bookable slots found for {date ? format(date, "PPP") : 'this day'}.</p>
-            </div>
-        )}
-      </div>
-
-    </div>
-  );
 }

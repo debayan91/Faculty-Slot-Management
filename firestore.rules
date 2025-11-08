@@ -3,10 +3,73 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read and write access to all documents by anyone.
-    // This is for development purposes only and is not secure.
+
+    // --------------------------------------------------------------------
+    // Helper Functions
+    // --------------------------------------------------------------------
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuth() && request.auth.token.admin == true;
+    }
+
+    // --------------------------------------------------------------------
+    // Collection: users
+    // --------------------------------------------------------------------
+    match /users/{userId} {
+      // Any authenticated user can create their own profile.
+      allow create: if isAuth();
+
+      // Only the user themselves or an admin can read or update a profile.
+      allow read, update: if isAuth() && (request.auth.uid == userId || isAdmin());
+
+      // Deletes are disallowed for now to maintain data integrity.
+      allow delete: if false;
+    }
+
+    // --------------------------------------------------------------------
+    // Collection: authorized_emails
+    // --------------------------------------------------------------------
+    match /authorized_emails/{email} {
+      // ONLY admins can view, create, or delete authorized emails.
+      // This is the key to the kingdom.
+      allow read, create, delete: if isAdmin();
+      allow update: if false; // Updates are not a standard operation.
+    }
+
+    // --------------------------------------------------------------------
+    // Collection: slots
+    // --------------------------------------------------------------------
+    match /slots/{slotId} {
+      // Any authenticated user can view the schedule slots.
+      allow read: if isAuth();
+
+      // Admins have full control to create, update, and delete slots.
+      allow create, update, delete: if isAdmin();
+      
+      // Logic for booking can be added here later. For example:
+      // allow update: if isAuth() && request.resource.data.booked_by == request.auth.uid;
+    }
+
+    // --------------------------------------------------------------------
+    // Collection: schedule_templates
+    // --------------------------------------------------------------------
+    match /schedule_templates/{templateId} {
+      // All authenticated users can read templates to see how schedules are built.
+      allow read: if isAuth();
+
+      // Only admins can create, update, or delete templates.
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --------------------------------------------------------------------
+    // Default Deny Rule
+    // --------------------------------------------------------------------
+    // For any other path not explicitly defined, deny all access.
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

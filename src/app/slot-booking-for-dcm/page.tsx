@@ -1,11 +1,10 @@
-'use client';
 
-import CourseRegistration from "@/components/course-registration";
+import CourseRegistration from '@/components/course-registration';
 
-export default function SlotBookingForDCMPage() {
+export default function SlotBookingPage() {
   return (
-    <main className="container mx-auto p-4 md:p-8">
+    <div className="container mx-auto p-4 md:p-8">
       <CourseRegistration />
-    </main>
+    </div>
   );
 }
