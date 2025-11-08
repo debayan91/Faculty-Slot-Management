@@ -4,11 +4,22 @@
 import { useUser } from "@/firebase";
 import AuthForm from "@/components/auth-form";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
-  const { user, loading } = useUser();
+  const { user, loading, isAuthorized } = useUser();
+  const router = useRouter();
 
-  if (loading) {
+  useEffect(() => {
+    // If the user is already logged in and authorized, redirect them away from the login page.
+    if (!loading && user && isAuthorized) {
+      router.replace('/slot-booking-for-dcm');
+    }
+  }, [user, loading, isAuthorized, router]);
+
+
+  if (loading || (user && isAuthorized)) {
     return (
       <div className="flex items-center justify-center flex-grow">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -16,25 +27,20 @@ export default function Home() {
     );
   }
 
+  // Only show AuthForm if the user is not logged in.
   if (!user) {
     return (
-      <main className="flex-grow flex items-center justify-center">
+      <main className="flex-grow flex items-center justify-center p-4">
         <AuthForm />
       </main>
     );
   }
 
-  // This is the view for logged-in users.
+  // This covers the case where a user is logged in but not authorized,
+  // or some other edge case. The AuthGuard will handle the redirect.
   return (
-     <main className="flex-grow flex items-center justify-center">
-        <div className="container mx-auto p-4 text-center">
-             <h1 className="text-4xl font-bold tracking-tight mb-4">
-                Welcome, {user.displayName || user.email}!
-              </h1>
-              <p className="text-lg text-muted-foreground">
-                You are successfully logged in.
-              </p>
-        </div>
-    </main>
+     <div className="flex items-center justify-center flex-grow">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
   );
 }

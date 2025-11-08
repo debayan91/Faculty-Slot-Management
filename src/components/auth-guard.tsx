@@ -8,7 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { useAdmin } from '@/context/AdminProvider';
 
 // List of routes that are publicly accessible or part of the auth flow
-const PUBLIC_ROUTES = ['/', '/login', '/signup', '/unauthorized', '/admin/auth'];
+const PUBLIC_ROUTES = ['/', '/unauthorized'];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, isAuthorized } = useUser();
@@ -21,19 +21,23 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return; // Wait until user state is determined
     }
 
-    const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+    const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/auth'); // /auth for login/signup
     const isAdminRoute = pathname.startsWith('/admin');
 
     // If user is an admin, they have access to admin routes, bypassing other checks.
     if (isAdmin && isAdminRoute) {
+        // Exception: if an admin logs out, they should be redirected from admin pages
+        if (!user) {
+            router.push('/');
+        }
       return;
     }
 
     // If user is logged in and authorized
     if (user && isAuthorized) {
-      // If they are on a public auth page (like /login or /unauthorized), redirect to home
-      if (pathname === '/login' || pathname === '/signup' || pathname === '/unauthorized') {
-        router.push('/');
+      // If they are on a public auth page (like / or /unauthorized), redirect to booking page
+      if (pathname === '/' || pathname === '/unauthorized') {
+        router.push('/slot-booking-for-dcm');
       }
       return;
     }
@@ -46,7 +50,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If user is NOT logged in (and not an admin trying to access admin pages)
+    // If user is NOT logged in
     if (!user) {
       if (!isPublicRoute) {
         router.push('/');
@@ -63,9 +67,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
+  
   // This logic prevents content "flickering" while redirects are in flight.
-  const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+  const isPublicRoute = PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/auth');
   const isAdminRoute = pathname.startsWith('/admin');
   
   if (isAdmin && isAdminRoute) {

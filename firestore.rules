@@ -16,9 +16,9 @@ service cloud.firestore {
     }
 
     // --------------------------------------------------------------------
-    // Collection: users
+    // Collection: faculties
     // --------------------------------------------------------------------
-    match /users/{userId} {
+    match /faculties/{userId} {
       // Any authenticated user can create their own profile.
       allow create: if isAuth();
 
@@ -34,9 +34,7 @@ service cloud.firestore {
     // --------------------------------------------------------------------
     match /authorized_emails/{email} {
       // ONLY admins can view, create, or delete authorized emails.
-      // This is the key to the kingdom.
-      allow read, create, delete: if isAdmin();
-      allow update: if false; // Updates are not a standard operation.
+      allow read, write: if isAdmin();
     }
 
     // --------------------------------------------------------------------
@@ -46,11 +44,26 @@ service cloud.firestore {
       // Any authenticated user can view the schedule slots.
       allow read: if isAuth();
 
-      // Admins have full control to create, update, and delete slots.
-      allow create, update, delete: if isAdmin();
+      // Admins have full control to create and delete slots.
+      allow create, delete: if isAdmin();
       
-      // Logic for booking can be added here later. For example:
-      // allow update: if isAuth() && request.resource.data.booked_by == request.auth.uid;
+      // Admins can update any field.
+      // Faculty can only update the booking fields if they are booking/cancelling.
+      allow update: if isAdmin() || (isAuth() && request.resource.data.booked_by == request.auth.uid) || (isAuth() && resource.data.booked_by == request.auth.uid);
+    }
+    
+    // --------------------------------------------------------------------
+    // Collection: dc_meeting_logs
+    // --------------------------------------------------------------------
+    match /dc_meeting_logs/{logId} {
+      // Any authenticated user can create a log entry for themselves.
+      allow create: if isAuth() && request.resource.data.facultyUid == request.auth.uid;
+      
+      // ONLY admins can read the logs.
+      allow read, list: if isAdmin();
+
+      // No one can update or delete logs to ensure data integrity.
+      allow update, delete: if false;
     }
 
     // --------------------------------------------------------------------
@@ -62,14 +75,6 @@ service cloud.firestore {
 
       // Only admins can create, update, or delete templates.
       allow create, update, delete: if isAdmin();
-    }
-
-    // --------------------------------------------------------------------
-    // Default Deny Rule
-    // --------------------------------------------------------------------
-    // For any other path not explicitly defined, deny all access.
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }

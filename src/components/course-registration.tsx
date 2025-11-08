@@ -5,11 +5,13 @@ import { useState, useMemo } from 'react';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirestore } from '@/firebase';
 import { useCollection } from 'react-firebase-hooks/firestore';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where, Timestamp, orderBy } from 'firebase/firestore';
 import { format, startOfDay } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { bookSlot } from '@/firebase/firestore/slot-booking';
 import type { Slot } from '@/lib/types';
+import { useDCSession } from '@/context/DCSessionProvider';
+import { DCMeetingForm } from './dc-meeting-form';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,21 +20,22 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Loader2, Calendar as CalendarIcon, CheckCircle, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
-function SlotCard({ slot, onBook, isLoading }: { slot: Slot, onBook: (slotId: string) => void, isLoading: boolean }) {
-    const { faculty } = useUser();
-    const isBookedByCurrentUser = faculty && slot.booked_by === faculty.uid;
+function SlotCard({ slot, onBook, isLoading, currentUserId }: { slot: Slot, onBook: (slotId: string) => void, isLoading: boolean, currentUserId: string | undefined }) {
+    const isBookedByCurrentUser = currentUserId && slot.booked_by === currentUserId;
 
     return (
-        <Card className={`transition-all ${isBookedByCurrentUser ? 'border-green-500' : ''}`}>
+        <Card className={`transition-all ${isBookedByCurrentUser ? 'border-primary' : ''}`}>
             <CardHeader>
-                <CardTitle>{slot.courseName || 'Unnamed Course'}</CardTitle>
-                <CardDescription>{format(new Date(slot.slot_datetime.toDate()), 'p')} - {slot.room || 'N/A'}</CardDescription>
+                <CardTitle>{slot.course_name || 'Available Slot'}</CardTitle>
+                 <CardDescription>
+                    {format(slot.slot_datetime.toDate(), 'p')} - {slot.room_number || 'N/A'}
+                </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-between items-center">
                 <div>
                     {slot.is_booked ? (
                         <div className="flex items-center gap-2">
-                            <CheckCircle className="text-green-500" />
+                            <CheckCircle className="text-primary" />
                             <span className="text-sm font-semibold">
                                 Booked by {isBookedByCurrentUser ? 'you' : (slot.faculty_name || 'another faculty')}
                             </span>
@@ -61,9 +64,10 @@ export default function CourseRegistration() {
     const { user, faculty, loading: userLoading } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const { isDCSessionActive, setDCSessionActive } = useDCSession();
 
     const [date, setDate] = useState<Date | undefined>(new Date());
-    const [bookingSlotId, setBookingSlotId] = useState<string | null>(null); // To track which slot is being booked
+    const [bookingSlotId, setBookingSlotId] = useState<string | null>(null);
 
     const slotsQuery = useMemo(() => {
         if (!firestore || !date) return null;
@@ -74,7 +78,8 @@ export default function CourseRegistration() {
         return query(
             collection(firestore, 'slots'),
             where('slot_datetime', '>=', Timestamp.fromDate(start)),
-            where('slot_datetime', '<=', Timestamp.fromDate(end))
+            where('slot_datetime', '<=', Timestamp.fromDate(end)),
+            orderBy('slot_datetime', 'asc')
         );
     }, [firestore, date]);
 
@@ -84,8 +89,7 @@ export default function CourseRegistration() {
         if (!slotsSnapshot) return [];
         return slotsSnapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() } as Slot))
-            .filter(slot => slot.is_bookable)
-            .sort((a, b) => a.slot_datetime.toDate().getTime() - b.slot_datetime.toDate().getTime());
+            .filter(slot => slot.is_bookable);
     }, [slotsSnapshot]);
 
     const handleBookSlot = async (slotId: string) => {
@@ -107,9 +111,13 @@ export default function CourseRegistration() {
             setBookingSlotId(null);
         }
     };
-
+    
     if (userLoading) {
         return <div className="flex justify-center items-center h-64"><Loader2 className="h-12 w-12 animate-spin" /></div>;
+    }
+
+    if (!isDCSessionActive) {
+      return <DCMeetingForm onSuccess={() => setDCSessionActive(true)} />;
     }
 
     return (
@@ -154,6 +162,7 @@ export default function CourseRegistration() {
                                 slot={slot}
                                 onBook={handleBookSlot}
                                 isLoading={bookingSlotId === slot.id}
+                                currentUserId={user?.uid}
                             />
                         ))}
                     </div>
