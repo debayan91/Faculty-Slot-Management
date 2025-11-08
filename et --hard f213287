@@ -1,0 +1,96 @@
+[33mf213287[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m6f52de5[m HEAD@{1}: commit: Changes before Firebase Studio auto-run
+[33mf213287[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{2}: reset: moving to HEAD~2
+[33m518e32f[m HEAD@{3}: commit: i just asked you to not change anything uiux just the syntax errors if a
+[33m4f3b092[m HEAD@{4}: commit: fix any problems you find in header and login-form. dont change uiux
+[33mf213287[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{5}: commit: I want a long | separating the logo and the text like a thin right borde
+[33m32573f7[m HEAD@{6}: commit: beside the logo in the header write SCOPE Research Portal in a thin gree
+[33m5417bfe[m HEAD@{7}: reset: moving to HEAD~1
+[33m449af0f[m HEAD@{8}: commit: center it better and make it horizontal
+[33m5417bfe[m HEAD@{9}: commit: remove all the text and center the login box in the login page
+[33m5466b00[m HEAD@{10}: reset: moving to HEAD~2
+[33m9724c5a[m HEAD@{11}: commit: i want you to go back to what we had.
+[33m051ac8c[m HEAD@{12}: commit: okay we gonna start a massive overhaul of the entire website. before we
+[33m5466b00[m HEAD@{13}: commit: remove the tick
+[33mdc8df76[m HEAD@{14}: commit: its jumbled up
+[33m41edd51[m HEAD@{15}: commit: keep the icon.svg
+[33mdaa462d[m HEAD@{16}: commit: didnt work
+[33m9f96a77[m HEAD@{17}: commit: i want that beside the title on the browser tab
+[33m779c20b[m HEAD@{18}: commit: undo last 2 changes
+[33m4c56465[m HEAD@{19}: commit: no i wanted the green logo beside the login on the main page to be besid
+[33mdf90c06[m HEAD@{20}: commit: fix the logo beside the title
+[33m6466803[m HEAD@{21}: commit: I have built a project using Firebase Studio, and I need a detailed, wel
+[33m8981b8c[m HEAD@{22}: commit: apparently theres no firebase.json
+[33mf1e2cc7[m[33m ([m[1;31morigin/main[m[33m)[m HEAD@{23}: commit: 1/1
+[33m13c4a89[m HEAD@{24}: commit: need to change the login page -- no other changes at all
+[33m7b21dc1[m HEAD@{25}: commit: on the home page when you position uiux-- please account for the navbars
+[33m60172c0[m HEAD@{26}: commit: can you move the entire function of the website that is slot booking --
+[33mdf3298e[m HEAD@{27}: commit: now create 4 empty pages to go to on clicking the 4 navbar buttons
+[33m6ff49b9[m HEAD@{28}: commit: can you enable turbopack. I need this to lead faster
+[33m49b0875[m HEAD@{29}: commit: there is no public folder?
+[33m0974ad4[m HEAD@{30}: commit: 1/2
+[33m161b16b[m HEAD@{31}: commit: oh there exists just one unnamed.png ---> it needs to be greyscaled and
+[33ma9b09b2[m HEAD@{32}: commit: no remove the text as well. its a big logo
+[33m4974225[m HEAD@{33}: commit: .We need to remove the current logo from the navbar. Instead use the one
+[33m726bc72[m HEAD@{34}: commit: now on clicking the user logo, i see a menu, that has a transparent bg b
+[33m9889d3d[m HEAD@{35}: commit: in the navbar top right, I want to see the actual gmail picture of the u
+[33m5139b97[m HEAD@{36}: commit: now just for that theme switcher button remove all hover effects border
+[33m11d4e11[m HEAD@{37}: commit: go back to what it was
+[33m56d8938[m HEAD@{38}: commit: the theme switch button cannot look like a button. it needs to rotate--
+[33mffefe86[m HEAD@{39}: commit: including the search one
+[33m8419147[m HEAD@{40}: commit: can you remove the shadows behind just the buttons in the 2nd navbar
+[33m46d511b[m HEAD@{41}: commit: instead of a search button make a search bar -- we will add fucntion lat
+[33m72a4f0b[m HEAD@{42}: commit: now we need to rename the buttons.
+[33m7d97534[m HEAD@{43}: commit: add a 2nd thinner navbar below the current navbar and add 6 buttons
+[33mb3ac344[m HEAD@{44}: commit: in admin mode there must be a button always in the navbar that takes the
+[33mddbe634[m HEAD@{45}: commit: now add a feature to the admin dashboard that will let the admin add som
+[33ma566713[m HEAD@{46}: commit: recheck just the entire admin flow route - end to end
+[33mba41ebc[m HEAD@{47}: commit: you messed up somewhere. I am seeing a 404. make sure to recheck everyth
+[33m496cb7b[m HEAD@{48}: commit: make sure that the admin can get into admin password and no need to sign
+[33m94449f6[m HEAD@{49}: commit: I cannot see the firestore change
+[33mb62159f[m HEAD@{50}: commit: now in this entire system I need to additional layer of security. So I n
+[33m1b14d93[m HEAD@{51}: reset: moving to origin/main
+[33m87ccf95[m HEAD@{52}: commit: firebase hosting is not working at all right now
+[33m092d05c[m HEAD@{53}: commit: ✔ Which Firebase features do you want to set up for this directory? Pres
+[33m1b14d93[m HEAD@{54}: reset: moving to 1b14d93
+[33m1b14d93[m HEAD@{55}: reset: moving to origin/main
+[33mfabdccb[m HEAD@{56}: commit: revert last changes
+[33m1b14d93[m HEAD@{57}: reset: moving to origin/main
+[33m47cb613[m HEAD@{58}: commit: recheck final everything before deployment
+[33m1b14d93[m HEAD@{59}: commit: nice finally it works go thry evrything 1 more time
+[33m4f85c36[m HEAD@{60}: commit: hey can you not use the same query you used foe admin mode why all this
+[33mec89c33[m HEAD@{61}: commit: 1/2
+[33mf12e760[m HEAD@{62}: commit: 1/1
+[33m2828521[m HEAD@{63}: commit: FirebaseError: The query requires an index. You can create it here: http
+[33mf2a7ac7[m HEAD@{64}: commit: FirebaseError: The query requires an index. You can create it here: http
+[33m29e7a53[m HEAD@{65}: commit: now the thing is when i am in admin mode, i can see what is bookable and
+[33mc2236ed[m HEAD@{66}: commit: well i still cannot see the bookable slots for a day other than the curr
+[33m7121d6d[m HEAD@{67}: commit: recheck everything
+[33m965e1aa[m HEAD@{68}: commit: now in cms view i see one more wrong thing the l1 a2 and all of that are
+[33m6b773b9[m HEAD@{69}: commit: at once only one date should look selected the current day can be blue i
+[33mae9ceeb[m HEAD@{70}: commit: now the main thing
+[33m1b02bcc[m HEAD@{71}: commit: can you go thru the backend part and just check if everything is fine in
+[33mc9c7261[m HEAD@{72}: commit: why do all slots show open in admin view to the rightmost column
+[33m3a766b8[m HEAD@{73}: commit: one last thing can you let faculties book slots for future days as well
+[33m598286a[m HEAD@{74}: commit: make it green
+[33m301f738[m HEAD@{75}: commit: you see the book logo png to the top left of the navbar
+[33m3573220[m HEAD@{76}: commit: what happened
+[33me4e7fba[m HEAD@{77}: commit: Module not found: Can't resolve '@/firebase/firestore/schedule-managemen
+[33meac01a3[m HEAD@{78}: commit: Console Error
+[33ma6fd131[m HEAD@{79}: commit: Console Error
+[33mb5b3653[m HEAD@{80}: commit: okay so i am in the admin page and i clicked on generate and it said ins
+[33m6c22348[m HEAD@{81}: reset: moving to origin/main
+[33m495ffc8[m HEAD@{82}: commit: revert changes
+[33mb92ee9f[m HEAD@{83}: commit: okay so right now lets configure the most important part of the whole t
+[33m9c74084[m HEAD@{84}: commit: before we move on can you just check everything make sure everything is
+[33md6d20e6[m HEAD@{85}: commit: Error: × Expected '{', got 'toast'
+[33m975e161[m HEAD@{86}: commit: now we couldnt restructure earlier. can you at least change some file na
+[33mbab03ea[m HEAD@{87}: commit: oh so you are gonna write code and that code is gonna create the tables
+[33m6c22348[m HEAD@{88}: reset: moving to origin/main
+[33mda2dbbb[m HEAD@{89}: commit: no, all the components are in a folder outside src
+[33mbfadf24[m HEAD@{90}: commit: i think first delete all the empty folders is a good idea
+[33m8572be0[m HEAD@{91}: commit: You've correctly implemented the secure `useUser` hook, which is the mos
+[33m028b6b1[m HEAD@{92}: commit: Here are my thoughts on the files. You've built an excellent, functional
+[33m6c22348[m HEAD@{93}: commit: new
+[33mbdec99d[m HEAD@{94}: commit: Try fixing this error: `Runtime Error: Error: Module not found: Can't re
+[33m56a809e[m HEAD@{95}: commit: Try fixing this error: `Build Error: Module
