@@ -32,7 +32,7 @@ export default function RootLayout({
       <body className={cn(montserrat.className, "min-h-screen flex flex-col")}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >

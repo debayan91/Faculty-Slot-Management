@@ -6,20 +6,13 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth, useUser } from "@/firebase";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, LogOut, User } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navButtons } from "@/config/nav-links";
 import { ThemeToggle } from "./theme-toggle";
+import { AdminToggler } from "./admin-toggler";
 
 export function Header() {
   const { user, isAuthorized, loading } = useUser();
@@ -33,14 +26,6 @@ export function Header() {
   };
 
   const isLoginPage = pathname === "/auth";
-
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("");
-  };
 
   if (loading) {
     return (
@@ -101,44 +86,15 @@ export function Header() {
         <div className="hidden md:flex items-center gap-4">
           {user && isAuthorized ? (
             <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="flex items-center gap-2 h-10 no-shadow bg-transparent"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.photoURL || undefined} />
-                      <AvatarFallback>
-                        {getInitials(user.displayName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium text-sm">
-                        {user.displayName || user.email}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Faculty
-                      </span>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
               <ThemeToggle />
+              <span className="text-green-600 font-thin">
+                {user.displayName || user.email}
+              </span>
+              <AdminToggler />
+              <Button onClick={handleLogout} variant="outline">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </Button>
             </>
           ) : (
             <ThemeToggle />
