@@ -4,11 +4,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
 import { useAuth, useFirestore } from "@/firebase";
+import { createFacultyProfile } from "@/firebase/firestore/user-profiles";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,35 +22,58 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from "@/components/ui/separator";
-import { createFacultyProfile } from "@/firebase/firestore/user-profiles";
 import { Loader2 } from "lucide-react";
+import { Separator } from "./ui/separator";
 
-interface LoginFormProps {
+interface SignupFormProps {
   toggleForm: () => void;
 }
 
-export default function LoginForm({ toggleForm }: LoginFormProps) {
+export default function SignupForm({ toggleForm }: SignupFormProps) {
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (password.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Password Too Short",
+        description: "Password must be at least 6 characters.",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast({ title: "Login Successful" });
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      await createFacultyProfile(firestore, user.uid, {
+        empId: user.uid.slice(0, 8), // Use part of UID as a mock employee ID
+        name: fullName,
+        email: user.email!,
+        role: "faculty",
+      });
+
+      toast({ title: "Account Created!", description: "You are now logged in." });
       router.push("/");
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Login Failed",
+        title: "Signup Failed",
         description: error.message,
       });
     } finally {
@@ -87,14 +111,25 @@ export default function LoginForm({ toggleForm }: LoginFormProps) {
 
   return (
     <Card className="w-full max-w-sm">
-      <form onSubmit={handleLogin}>
+      <form onSubmit={handleSignUp}>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Sign Up</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account.
+            Enter your information to create an account.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="full-name">Full name</Label>
+            <Input
+              id="full-name"
+              placeholder="Dr. Jane Doe"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -119,7 +154,7 @@ export default function LoginForm({ toggleForm }: LoginFormProps) {
             />
           </div>
           <Button className="w-full" type="submit" disabled={isLoading}>
-            {isLoading ? <Loader2 className="animate-spin" /> : "Sign in"}
+              {isLoading ? <Loader2 className="animate-spin" /> : "Create account"}
           </Button>
           <Separator className="my-2" />
           <Button
@@ -148,14 +183,14 @@ export default function LoginForm({ toggleForm }: LoginFormProps) {
               ></path>
               <path fill="none" d="M0 0h48v48H0z"></path>
             </svg>
-            Sign in with Google
+            Sign up with Google
           </Button>
         </CardContent>
-        <CardFooter className="flex flex-col">
+        <CardFooter>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            Already have an account?{" "}
             <button type="button" onClick={toggleForm} className="underline">
-              Sign up
+              Login
             </button>
           </div>
         </CardFooter>

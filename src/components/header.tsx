@@ -1,196 +1,104 @@
 
-'use client';
+"use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
+import { usePathname } from "next/navigation";
 import { useAuth, useUser } from "@/firebase";
-import { ThemeToggle } from "./theme-toggle";
-import { Button } from "./ui/button";
-import {
-  BookOpenCheck,
-  LogOut,
-  User as UserIcon,
-  LogIn,
-  ShieldCheck,
-  UserCog,
-  Home,
-  DatabaseZap,
-  FileText,
-  CalendarCheck,
-  Target,
-  FilePlus,
-  Search,
-  XCircle,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { signOut } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/context/AdminProvider";
-import { Switch } from "./ui/switch";
-import { Label } from "./ui/label";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { ChevronDown, LogOut, Search, User, UserCog } from "lucide-react";
 import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
+import { navButtons, adminNavButtons, facultyNavButtons, studentNavButtons } from "@/config/nav-links";
 
 export function Header() {
+  const { user } = useUser();
   const auth = useAuth();
-  const { user, faculty } = useUser();
-  const router = useRouter();
-  const pathname = usePathname();
   const { toast } = useToast();
-  const { isAdmin, setIsAdmin, previousPath, setPreviousPath } = useAdmin();
+  const pathname = usePathname();
+  const { isAdmin, loading: adminLoading } = useAdmin();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      setIsAdmin(false); // Clear admin state on sign out
-      toast({ title: "Signed Out", description: "You have been successfully signed out." });
-      router.push("/");
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign Out Failed",
-        description: error.message,
-      });
-    }
+  const handleLogout = async () => {
+    await signOut(auth);
+    toast({ title: "Logged Out" });
   };
 
-  const handleAdminToggle = (isChecked: boolean) => {
-    if (isChecked) {
-      // If turning ON, save current path and navigate to admin auth page
-      setPreviousPath(pathname);
-      router.push('/admin/auth');
-    } else {
-      // If turning OFF, deactivate admin and go home or to previous path
-      setIsAdmin(false);
-      toast({ title: "Admin Mode Deactivated" });
-      router.push(previousPath || '/');
-    }
+  const isLoginPage = pathname === '/auth';
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('');
   };
-  
-  const handleExitAdminMode = () => {
-      setIsAdmin(false);
-      toast({ title: "Admin Mode Deactivated" });
-      router.push(previousPath || '/');
+
+  if (adminLoading) {
+    return (
+        <header className="sticky top-0 z-50 w-full bg-background/50 backdrop-blur-xl">
+            <div className="container flex h-[15vh] max-w-screen-2xl items-center justify-between">
+                <div className="flex items-center space-x-4">
+                    <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="dark:hidden object-contain" />
+                    <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="hidden dark:block filter grayscale brightness-[900%] object-contain" />
+                </div>
+            </div>
+        </header>
+    );
   }
-
-  const getInitials = (name: string) => {
-    const names = name.split(" ");
-    if (names.length > 1) {
-      return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  const navButtons = [
-    { name: "Documents for DCM", icon: FileText, href: "/documents-for-dcm" },
-    { name: "Monthly Target", icon: Target, href: "/monthly-target" },
-    { name: "Claim documents", icon: FilePlus, href: "/claim-documents" },
-    { name: "Slot booking for DCM", icon: CalendarCheck, href: "/slot-booking-for-dcm" },
-  ];
-  
-  const isLoginPage = pathname === '/' && !user;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/50 backdrop-blur-xl">
       {/* Main Header */}
-      <div className="container flex h-[15vh] max-w-screen-2xl items-center">
-        <div className="mr-4 flex">
-          <Link href="/" className="mr-6 flex items-center space-x-4">
-            <div>
-                <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="dark:hidden object-contain" />
-                <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="hidden dark:block filter grayscale brightness-[900%] object-contain" />
+      <div className="container flex h-[15vh] max-w-screen-2xl items-center justify-between">
+        <div className="flex items-center space-x-4">
+            <Link href="/" className="flex items-center space-x-4">
+              <div>
+                  <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="dark:hidden object-contain" />
+                  <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="hidden dark:block filter grayscale brightness-[900%] object-contain" />
+              </div>
+              <div className="border-r border-border/50 h-10"></div>
+            </Link>
+            <div className="hidden md:flex items-center space-x-2">
+                <h1 className="text-lg font-semibold text-foreground">SCOPE Research Portal</h1>
             </div>
-            <div className="border-r border-border/50 h-10"></div>
-            <span className="text-2xl font-light text-primary whitespace-nowrap">SCOPE Research Portal</span>
-          </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <ThemeToggle />
-          {isAdmin && (
-            <Button variant="outline" size="sm" onClick={handleExitAdminMode}>
-                <XCircle className="mr-2 h-4 w-4" />
-                Exit Admin Mode
-            </Button>
-          )}
 
-          {user ? (
+        <div className="hidden md:flex items-center gap-4">
+          {user && !isLoginPage && (
             <>
-              {!isAdmin && (
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="admin-mode-switch" className="text-sm font-medium">
-                    Admin
-                  </Label>
-                  <Switch
-                    id="admin-mode-switch"
-                    checked={isAdmin}
-                    onCheckedChange={handleAdminToggle}
-                  />
-                </div>
-              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="backdrop-blur-xl relative h-8 w-8 rounded-full">
+                  <Button variant="ghost" className="flex items-center gap-2 h-10 no-shadow bg-transparent">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={user.photoURL || undefined}
-                        alt={faculty?.name || user.email || ""}
-                      />
-                      <AvatarFallback>
-                        {faculty?.name
-                          ? getInitials(faculty.name)
-                          : user.email
-                          ? user.email.substring(0, 2).toUpperCase()
-                          : <UserIcon />}
-                      </AvatarFallback>
+                      <AvatarImage src={user.photoURL || undefined} />
+                      <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
                     </Avatar>
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium text-sm">{user.displayName || user.email}</span>
+                      <span className="text-xs text-muted-foreground">{isAdmin ? 'Admin' : 'Faculty'}</span>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {faculty?.name}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                   <DropdownMenuItem onClick={() => router.push('/')}>
-                      <Home className="mr-2 h-4 w-4" />
-                      <span>Home</span>
-                    </DropdownMenuItem>
-                  {isAdmin && (
-                    <>
-                      <DropdownMenuItem onClick={() => router.push('/admin')}>
-                        <ShieldCheck className="mr-2 h-4 w-4" />
-                        <span>Admin Dashboard</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push('/admin/templates')}>
-                        <DatabaseZap className="mr-2 h-4 w-4" />
-                        <span>Template Manager</span>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
+                    <span>Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
-          ) : !isAdmin && !isLoginPage && (
+          )}
+          {!isAdmin && !isLoginPage && (
             <div className="flex items-center gap-2">
               <Button variant="outline" asChild>
                 <Link href="/admin/auth">
@@ -204,13 +112,13 @@ export function Header() {
       </div>
       {/* Secondary Navbar */}
       {!isLoginPage && (
-        <nav className="border-b border-border/40">
+        <nav className="hidden md:block border-b border-border/40">
           <div className="container flex h-12 max-w-screen-2xl items-center justify-between">
               <div className="flex items-center space-x-2">
                   {navButtons.map((button) => (
                     <Button key={button.name} variant="ghost" size="sm" className={cn("h-8 no-shadow", {"bg-transparent": true})} asChild>
                       <Link href={button.href}>
-                          <button.icon className="mr-2 h-4 w-4"/>
+                        <button.icon className="mr-2 h-4 w-4"/>
                           {button.name}
                       </Link>
                     </Button>

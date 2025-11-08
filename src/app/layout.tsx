@@ -15,8 +15,11 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Faculty Slot Management",
+  title: "SCOPE Research Portal",
   description: "Book and manage faculty time slots",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -26,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={cn(montserrat.className)}>
+      <body className={cn(montserrat.className, "min-h-screen flex flex-col")}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -37,7 +40,7 @@ export default function RootLayout({
             <AdminProvider>
               <AuthGuard>
                 <Header />
-                <div className="pt-8">{children}</div>
+                <main className="flex-grow flex flex-col">{children}</main>
                 <Toaster />
               </AuthGuard>
             </AdminProvider>

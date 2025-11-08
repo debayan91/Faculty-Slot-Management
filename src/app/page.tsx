@@ -2,7 +2,7 @@
 "use client";
 
 import { useUser } from "@/firebase";
-import LoginForm from "@/components/login-form";
+import AuthForm from "@/components/auth-form";
 import { Loader2 } from "lucide-react";
 
 export default function Home() {
@@ -10,7 +10,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-128px)]">
+      <div className="flex items-center justify-center flex-grow">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -18,15 +18,15 @@ export default function Home() {
 
   if (!user) {
     return (
-      <main className="flex-grow flex items-center justify-center min-h-[calc(100vh-128px)]">
-        <LoginForm />
+      <main className="flex-grow flex items-center justify-center">
+        <AuthForm />
       </main>
     );
   }
 
   // This is the view for logged-in users.
   return (
-     <main className="flex-grow flex items-center justify-center min-h-[calc(100vh-128px)]">
+     <main className="flex-grow flex items-center justify-center">
         <div className="container mx-auto p-4 text-center">
              <h1 className="text-4xl font-bold tracking-tight mb-4">
                 Welcome, {user.displayName || user.email}!
