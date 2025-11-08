@@ -18,6 +18,10 @@
         {
           "fieldPath": "booked_by",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "slot_datetime",
+          "order": "ASCENDING"
         }
       ]
     }
