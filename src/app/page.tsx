@@ -3,8 +3,7 @@
 
 import { useUser } from "@/firebase";
 import LoginForm from "@/components/login-form";
-import { Loader2 } from "lucide-react";
-import Image from "next/image";
+import { BookOpenCheck, Loader2 } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useUser();
@@ -26,12 +25,10 @@ export default function Home() {
               <LoginForm />
             </div>
             <div className="hidden md:flex flex-col items-start text-left">
-                <div className="flex items-center gap-4 mb-4">
-                    <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={100} height={40} className="dark:filter dark:grayscale dark:brightness-[900%]" />
-                    <h1 className="text-4xl font-bold tracking-tight">
-                        Faculty Slot Management Portal
-                    </h1>
-                </div>
+              <BookOpenCheck className="h-16 w-16 text-primary mb-4" />
+              <h1 className="text-4xl font-bold tracking-tight">
+                Faculty Slot Management Portal
+              </h1>
               <p className="text-lg text-muted-foreground">
                 Please sign in to manage your course schedules, book available slots, and view your timetable.
               </p>

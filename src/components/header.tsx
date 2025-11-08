@@ -103,11 +103,10 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-background/50 backdrop-blur-xl">
       {/* Main Header */}
       <div className="container flex h-[15vh] max-w-screen-2xl items-center">
-        <div className="mr-4 flex items-center">
-          <Link href="/" className="mr-6 flex items-center space-x-4">
-            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={180} height={60} className="dark:hidden object-contain" />
-            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={180} height={60} className="hidden dark:block filter grayscale brightness-[900%] object-contain" />
-            <span className="font-bold text-lg hidden sm:inline-block">Faculty Slot Management</span>
+        <div className="mr-4 flex">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="dark:hidden object-contain" />
+            <Image src="https://d2lk14jtvqry1q.cloudfront.net/media/small_Vellore_Institute_of_Technology_Business_School_VIT_BS_54186d8069_43307f0402_809869aaa7_17ad59e62d.png" alt="Logo" width={220} height={80} className="hidden dark:block filter grayscale brightness-[900%] object-contain" />
           </Link>
         </div>
         <div className="flex flex-1 items-center justify-end space-x-4">
