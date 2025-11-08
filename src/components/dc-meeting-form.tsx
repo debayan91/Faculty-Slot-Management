@@ -36,6 +36,8 @@ import {
 import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
+  empId: z.string().min(1, 'Employee ID is required.'),
+  facultyName: z.string().min(1, 'Name is required.'),
   scholarRegistrationNumber: z.string().min(1, 'Scholar registration number is required.'),
   scholarName: z.string().min(1, 'Scholar name is required.'),
   meetingType: z.string().min(1, 'Please select a meeting type.'),
@@ -56,6 +58,8 @@ export function DCMeetingForm({ onSuccess }: DCMeetingFormProps) {
   const form = useForm<DCMeetingFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      empId: faculty?.empId || '',
+      facultyName: faculty?.name || '',
       scholarRegistrationNumber: '',
       scholarName: '',
       meetingType: '',
@@ -76,10 +80,8 @@ export function DCMeetingForm({ onSuccess }: DCMeetingFormProps) {
     try {
       await createDCMeetingLog(firestore, {
         facultyUid: user.uid,
-        empId: faculty.empId,
-        facultyName: faculty.name,
         facultyEmail: faculty.email,
-        ...values,
+        ...values, // values from the form now include empId and facultyName
       });
 
       toast({
@@ -110,14 +112,32 @@ export function DCMeetingForm({ onSuccess }: DCMeetingFormProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="space-y-2">
-                <Label>Emp ID</Label>
-                <Input value={faculty?.empId || ''} disabled />
-              </div>
-               <div className="space-y-2">
-                <Label>Name</Label>
-                <Input value={faculty?.name || ''} disabled />
-              </div>
+              <FormField
+                control={form.control}
+                name="empId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Emp ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your Employee ID" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="facultyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Your Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
              <div className="space-y-2">
               <Label>Email</Label>
