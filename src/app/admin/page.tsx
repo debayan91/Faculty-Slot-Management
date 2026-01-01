@@ -27,6 +27,7 @@ import {
   PlusCircle,
   MailWarning,
   Users,
+  Download,
 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -51,6 +52,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { slotsToCSVData, exportToCSV } from '@/lib/export-utils';
 
 const EditableCell = ({
   slotId,
@@ -320,6 +322,32 @@ export default function AdminDashboardPage() {
               Templates
             </Button>
           </Link>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={async () => {
+              if (!firestore) return;
+              const allBookedQuery = query(
+                collection(firestore, 'slots'),
+                where('is_booked', '==', true),
+              );
+              const snapshot = await getDocs(allBookedQuery);
+              const allBooked = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Slot);
+              if (allBooked.length === 0) {
+                toast({
+                  title: 'No Data',
+                  description: 'No bookings found.',
+                  variant: 'destructive',
+                });
+                return;
+              }
+              const data = slotsToCSVData(allBooked, true);
+              exportToCSV(data, 'all-bookings', true);
+              toast({ title: 'Downloaded', description: `Exported ${allBooked.length} bookings.` });
+            }}
+          >
+            <Download className='mr-2 h-4 w-4' /> Export All
+          </Button>
         </div>
       </div>
 

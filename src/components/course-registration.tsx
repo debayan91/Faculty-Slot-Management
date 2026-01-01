@@ -62,7 +62,7 @@ export default function CourseRegistration({ onSuccess }: CourseRegistrationProp
       .sort((a, b) => a.slot_datetime.toDate().getTime() - b.slot_datetime.toDate().getTime());
   }, [slotsSnapshot]);
 
-  const handleBookSlot = async (slotId: string, slotTime: Date) => {
+  const handleBookSlot = async (slotId: string, slotTime: Date, slot: Slot) => {
     if (!user || !faculty || !firestore) return;
     setBookingSlotId(slotId);
 
@@ -87,6 +87,21 @@ export default function CourseRegistration({ onSuccess }: CourseRegistrationProp
         description: `Successfully booked for ${format(slotTime, 'p')}.`,
         action: <CheckCircle className='h-5 w-5' />,
       });
+
+      // Send confirmation email (non-blocking)
+      fetch('/api/send-confirmation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: faculty.email,
+          userName: user.displayName || faculty.email,
+          slotDate: format(slotTime, 'PPP'),
+          slotTime: format(slotTime, 'p'),
+          courseName: slot.course_name,
+          roomNumber: slot.room_number,
+        }),
+      }).catch((err) => console.error('Email send failed:', err));
+
       onSuccess();
     } catch (error: any) {
       toast({
@@ -185,7 +200,7 @@ export default function CourseRegistration({ onSuccess }: CourseRegistrationProp
                     </Button>
                   ) : (
                     <Button
-                      onClick={() => handleBookSlot(slot.id, slot.slot_datetime.toDate())}
+                      onClick={() => handleBookSlot(slot.id, slot.slot_datetime.toDate(), slot)}
                       disabled={!!bookingSlotId}
                       className='w-full'
                     >

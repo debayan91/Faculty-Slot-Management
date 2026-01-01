@@ -43,6 +43,8 @@ export interface Slot {
   is_bookable: boolean; // Admin sets this to true to allow booking
   is_booked: boolean;
   booked_by: string | null; // The faculty's user ID (uid) who booked it
+  booked_by_email: string | null; // Email of the person who booked
+  booked_at: Timestamp | null; // When the booking was made
   slot_code: string | null;
 }
 

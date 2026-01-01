@@ -9,10 +9,11 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { cancelBooking } from '@/firebase/firestore/slot-booking';
 import type { Slot } from '@/lib/types';
+import { slotsToCSVData, exportToCSV } from '@/lib/export-utils';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Trash2, Calendar, Clock, ArrowLeft } from 'lucide-react';
+import { Loader2, Trash2, Calendar, Clock, ArrowLeft, Download } from 'lucide-react';
 import Link from 'next/link';
 
 export default function MyBookedSlotsPage() {
@@ -50,6 +51,16 @@ export default function MyBookedSlotsPage() {
     }
   };
 
+  const handleExport = () => {
+    if (mySlots.length === 0) {
+      toast({ title: 'No Data', description: 'No bookings to export.', variant: 'destructive' });
+      return;
+    }
+    const data = slotsToCSVData(mySlots);
+    exportToCSV(data, 'my-bookings');
+    toast({ title: 'Downloaded', description: 'Your bookings have been exported.' });
+  };
+
   if (userLoading || bookedSlotsLoading) {
     return (
       <div className='flex justify-center items-center h-64'>
@@ -60,16 +71,23 @@ export default function MyBookedSlotsPage() {
 
   return (
     <div className='container mx-auto p-4 md:p-8 animate-fade-in space-y-6'>
-      <div className='flex items-center gap-3'>
-        <Button asChild variant='ghost' size='icon' className='h-8 w-8'>
-          <Link href='/slot-booking-for-dcm'>
-            <ArrowLeft className='h-4 w-4' />
-          </Link>
-        </Button>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight'>My Bookings</h1>
-          <p className='text-sm text-muted-foreground'>Manage your upcoming appointments.</p>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-3'>
+          <Button asChild variant='ghost' size='icon' className='h-8 w-8'>
+            <Link href='/slot-booking-for-dcm'>
+              <ArrowLeft className='h-4 w-4' />
+            </Link>
+          </Button>
+          <div>
+            <h1 className='text-2xl font-bold tracking-tight'>My Bookings</h1>
+            <p className='text-sm text-muted-foreground'>Manage your upcoming appointments.</p>
+          </div>
         </div>
+        {mySlots.length > 0 && (
+          <Button variant='outline' size='sm' onClick={handleExport}>
+            <Download className='mr-2 h-4 w-4' /> Export CSV
+          </Button>
+        )}
       </div>
 
       <Card>
