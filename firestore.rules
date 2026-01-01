@@ -49,7 +49,13 @@ service cloud.firestore {
       
       // Admins can update any field.
       // Faculty can only update the booking fields if they are booking/cancelling.
-      allow update: if isAdmin() || (isAuth() && request.resource.data.booked_by == request.auth.uid) || (isAuth() && resource.data.booked_by == request.auth.uid);
+      allow update: if isAdmin() || 
+                    (isAuth() && 
+                     // Case 1: Booking a slot (must be currently unbooked)
+                     (request.resource.data.booked_by == request.auth.uid && resource.data.booked_by == null) ||
+                     // Case 2: Cancelling a slot (must be booked by current user)
+                     (request.resource.data.booked_by == null && resource.data.booked_by == request.auth.uid)
+                    );
     }
     
     // --------------------------------------------------------------------

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -20,7 +19,7 @@ export async function addAuthorizedEmail(db: Firestore, email: string) {
   }
 
   const authorizedEmailRef = doc(db, 'authorized_emails', email);
-  
+
   await setDoc(authorizedEmailRef, {
     email: email,
     addedAt: serverTimestamp(),
@@ -31,10 +30,10 @@ export async function addAuthorizedEmail(db: Firestore, email: string) {
  * Removes an email from the 'authorized_emails' collection.
  */
 export async function removeAuthorizedEmail(db: Firestore, email: string) {
-    if (!email) {
-        throw new Error('No email provided.');
-    }
+  if (!email) {
+    throw new Error('No email provided.');
+  }
 
-    const authorizedEmailRef = doc(db, 'authorized_emails', email);
-    await deleteDoc(authorizedEmailRef);
+  const authorizedEmailRef = doc(db, 'authorized_emails', email);
+  await deleteDoc(authorizedEmailRef);
 }

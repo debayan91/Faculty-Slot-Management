@@ -1,52 +1,91 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useFirestore } from '@/firebase'; // Correctly import the hook
+import { useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, Save, Info } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-const jsonTemplateExample = JSON.stringify([
-  { "startTime": "09:00", "courseName": "Introduction to Programming", "facultyName": "Dr. Smith", "room": "101", "isBookable": true },
-  { "startTime": "10:00", "courseName": "Data Structures", "facultyName": "Dr. Jones", "room": "102", "isBookable": true },
-  { "startTime": "11:00", "courseName": "", "facultyName": "", "room": "", "isBookable": false }
-], null, 2);
+const jsonTemplateExample = JSON.stringify(
+  [
+    {
+      startTime: '09:00',
+      courseName: 'DC Meeting',
+      facultyName: '',
+      room: '101',
+      isBookable: true,
+    },
+    {
+      startTime: '10:00',
+      courseName: 'DC Meeting',
+      facultyName: '',
+      room: '101',
+      isBookable: true,
+    },
+    {
+      startTime: '11:00',
+      courseName: 'DC Meeting',
+      facultyName: '',
+      room: '101',
+      isBookable: true,
+    },
+    {
+      startTime: '14:00',
+      courseName: 'DC Meeting',
+      facultyName: '',
+      room: '101',
+      isBookable: true,
+    },
+    {
+      startTime: '15:00',
+      courseName: 'DC Meeting',
+      facultyName: '',
+      room: '101',
+      isBookable: true,
+    },
+  ],
+  null,
+  2,
+);
 
 export default function TemplatesPage() {
-  const db = useFirestore(); // Use the hook to get the Firestore instance
+  const db = useFirestore();
   const [activeDay, setActiveDay] = useState(DAYS_OF_WEEK[0]);
   const [templateContent, setTemplateContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  const fetchTemplate = useCallback(async (day: string) => {
-    if (!db) return;
-    setLoading(true);
-    try {
-      const templateRef = doc(db, 'schedule_templates', day);
-      const docSnap = await getDoc(templateRef);
-      if (docSnap.exists()) {
-        const content = docSnap.data().slots;
-        setTemplateContent(JSON.stringify(content, null, 2));
-      } else {
-        setTemplateContent(jsonTemplateExample);
+  const fetchTemplate = useCallback(
+    async (day: string) => {
+      if (!db) return;
+      setLoading(true);
+      try {
+        const templateRef = doc(db, 'schedule_templates', day);
+        const docSnap = await getDoc(templateRef);
+        setTemplateContent(
+          docSnap.exists() ? JSON.stringify(docSnap.data().slots, null, 2) : jsonTemplateExample,
+        );
+      } catch (error) {
+        console.error(`Error fetching ${day} template:`, error);
+        toast({
+          title: 'Error',
+          description: `Could not load ${day} template.`,
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error(`Error fetching ${day} template:`, error);
-      toast({ title: "Error", description: `Could not load the template for ${day}.`, variant: "destructive" });
-      setTemplateContent('Error loading template. Please check the console.');
-    } finally {
-      setLoading(false);
-    }
-  }, [db, toast]);
+    },
+    [db, toast],
+  );
 
   useEffect(() => {
     fetchTemplate(activeDay);
@@ -59,11 +98,7 @@ export default function TemplatesPage() {
       parsedSlots = JSON.parse(templateContent);
       if (!Array.isArray(parsedSlots)) throw new Error('Template must be a JSON array.');
     } catch (error: any) {
-      toast({
-        title: "Invalid JSON Format",
-        description: error.message || 'Please ensure the template is a valid JSON array of slot objects.',
-        variant: "destructive",
-      });
+      toast({ title: 'Invalid JSON', description: error.message, variant: 'destructive' });
       return;
     }
 
@@ -71,61 +106,85 @@ export default function TemplatesPage() {
     try {
       const templateRef = doc(db, 'schedule_templates', activeDay);
       await setDoc(templateRef, { day: activeDay, slots: parsedSlots });
-      toast({
-        title: "Template Saved!",
-        description: `The schedule template for ${activeDay} has been successfully updated.`,
-        action: <CheckCircle className="h-5 w-5 text-green-500" />,
-      });
+      toast({ title: 'Template Saved!', description: `${activeDay} schedule updated.` });
     } catch (error) {
       console.error(`Error saving ${activeDay} template:`, error);
-      toast({ title: "Error", description: "Could not save the template.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Could not save the template.',
+        variant: 'destructive',
+      });
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Weekly Schedule Templates</CardTitle>
-        <CardDescription>
-          Define the schedule for each day of the week. These templates will be used to generate the daily schedules.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs value={activeDay} onValueChange={setActiveDay} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 md:grid-cols-7 mb-4">
-            {DAYS_OF_WEEK.map(day => (
-              <TabsTrigger key={day} value={day} className="capitalize">{day}</TabsTrigger>
-            ))}
-          </TabsList>
-          {DAYS_OF_WEEK.map(day => (
-            <TabsContent key={day} value={day}>
-              {loading ? (
-                <div className="flex items-center justify-center h-96">
-                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <Textarea
-                    value={templateContent}
-                    onChange={(e) => setTemplateContent(e.target.value)}
-                    rows={20}
-                    placeholder='Enter your JSON template here...'
-                    className="font-mono bg-muted/20"
-                  />
-                  <div className="flex justify-end">
-                    <Button onClick={handleSave} disabled={saving || !db}>
-                      {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      {saving ? 'Saving...' : `Save ${day.charAt(0).toUpperCase() + day.slice(1)} Template`}
-                    </Button>
+    <div className='container mx-auto p-4 md:p-8 animate-fade-in space-y-6'>
+      <h1 className='text-2xl font-bold tracking-tight'>Schedule Templates</h1>
+
+      <Alert>
+        <Info className='h-4 w-4' />
+        <AlertTitle>How Templates Work</AlertTitle>
+        <AlertDescription>
+          Templates define the default slot structure for each day. When you "Generate" a schedule
+          on the Admin Dashboard, it uses the template for that day of the week to create the slots.
+        </AlertDescription>
+      </Alert>
+
+      <Card className='bg-card'>
+        <CardHeader>
+          <CardTitle className='text-sm font-medium'>Daily Configuration</CardTitle>
+          <CardDescription>Edit the JSON array of slot objects for each day.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeDay} onValueChange={setActiveDay} className='w-full'>
+            <TabsList className='grid w-full grid-cols-7 mb-4 bg-secondary'>
+              {DAYS_OF_WEEK.map((day) => (
+                <TabsTrigger
+                  key={day}
+                  value={day}
+                  className='capitalize text-xs data-[state=active]:bg-background'
+                >
+                  {day.slice(0, 3)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {DAYS_OF_WEEK.map((day) => (
+              <TabsContent key={day} value={day} className='mt-0'>
+                {loading ? (
+                  <div className='flex items-center justify-center h-80'>
+                    <Loader2 className='h-6 w-6 animate-spin text-muted-foreground' />
                   </div>
-                </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </CardContent>
-    </Card>
+                ) : (
+                  <div className='space-y-4'>
+                    <Textarea
+                      value={templateContent}
+                      onChange={(e) => setTemplateContent(e.target.value)}
+                      rows={14}
+                      placeholder='Enter your JSON template here...'
+                      className='font-mono text-sm resize-none bg-secondary/30'
+                    />
+                    <div className='flex justify-between items-center'>
+                      <p className='text-xs text-muted-foreground'>
+                        Fields: startTime, courseName, facultyName, room, isBookable
+                      </p>
+                      <Button onClick={handleSave} disabled={saving || !db}>
+                        {saving ? (
+                          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        ) : (
+                          <Save className='mr-2 h-4 w-4' />
+                        )}
+                        {saving ? 'Saving...' : 'Save Template'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

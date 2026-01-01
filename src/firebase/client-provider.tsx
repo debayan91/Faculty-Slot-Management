@@ -6,15 +6,13 @@ import type { Firestore } from 'firebase/firestore';
 import { useEffect, useState, type ReactNode } from 'react';
 
 import { FirebaseProvider } from '@/firebase/provider';
-import { initializeFirebase } from '.';
+import { initializeFirebase } from './init';
 
 type FirebaseClientProviderProps = {
   children: ReactNode;
 };
 
-export function FirebaseClientProvider({
-  children,
-}: FirebaseClientProviderProps) {
+export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
   const [firebase, setFirebase] = useState<{
     app: FirebaseApp;
     auth: Auth;
@@ -31,11 +29,7 @@ export function FirebaseClientProvider({
   }
 
   return (
-    <FirebaseProvider
-      app={firebase.app}
-      auth={firebase.auth}
-      firestore={firebase.firestore}
-    >
+    <FirebaseProvider app={firebase.app} auth={firebase.auth} firestore={firebase.firestore}>
       {children}
     </FirebaseProvider>
   );

@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  type Firestore,
-} from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
 
 export interface DCMeetingLog {
   facultyUid: string;
@@ -23,7 +18,7 @@ export interface DCMeetingLog {
  */
 export async function createDCMeetingLog(
   db: Firestore,
-  logData: Omit<DCMeetingLog, 'submittedAt'>
+  logData: Omit<DCMeetingLog, 'submittedAt'>,
 ) {
   if (!db) {
     throw new Error('Firestore instance is not available.');

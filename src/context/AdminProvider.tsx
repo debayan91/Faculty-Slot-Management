@@ -1,4 +1,3 @@
-
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -12,7 +11,7 @@ interface AdminContextType {
   previousPath: string;
   setPreviousPath: (path: string) => void;
   // Kept for client-side toggling, though claims are the source of truth
-  setIsAdmin: (isAdmin: boolean) => void; 
+  setIsAdmin: (isAdmin: boolean) => void;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
@@ -37,21 +36,23 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     }
 
     // Force a token refresh to get the latest claims.
-    user.getIdTokenResult(true).then(idTokenResult => {
-      const claims = idTokenResult.claims;
-      // Check for the admin custom claim.
-      if (claims.admin === true) {
-        setIsAdmin(true);
-      } else {
-        setIsAdmin(false);
-      }
-      setClaimsLoading(false);
-    }).catch(error => {
-        console.error("Error fetching custom claims:", error);
+    user
+      .getIdTokenResult(true)
+      .then((idTokenResult) => {
+        const claims = idTokenResult.claims;
+        // Check for the admin custom claim.
+        if (claims.admin === true) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+        setClaimsLoading(false);
+      })
+      .catch((error) => {
+        console.error('Error fetching custom claims:', error);
         setIsAdmin(false);
         setClaimsLoading(false);
-    });
-
+      });
   }, [user, authLoading]);
 
   const value = {
@@ -65,18 +66,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   // The loading screen is handled here now to prevent layout shifts
   if (value.loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Verifying permissions...</p>
+      <div className='flex items-center justify-center h-screen'>
+        <Loader2 className='h-12 w-12 animate-spin text-primary' />
+        <p className='ml-4 text-lg'>Verifying permissions...</p>
       </div>
     );
   }
 
-  return (
-    <AdminContext.Provider value={value}>
-      {children}
-    </AdminContext.Provider>
-  );
+  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 }
 
 export function useAdmin() {

@@ -1,4 +1,3 @@
-
 import { BookOpen, FileText, ClipboardList } from 'lucide-react';
 
 export const navButtons = [

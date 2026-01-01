@@ -1,9 +1,8 @@
-
 'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export function AdminNav({ className, ...props }: React.HTMLAttributes<HTMLElement>) {
   const pathname = usePathname();
@@ -12,21 +11,19 @@ export function AdminNav({ className, ...props }: React.HTMLAttributes<HTMLEleme
     { href: '/admin', label: 'Dashboard' },
     { href: '/admin/appointments', label: 'Appointments' },
     { href: '/admin/reports', label: 'Reports' },
-    { href: '/admin/templates', label: 'Templates' }, // Added Templates link
+    { href: '/admin/templates', label: 'Templates' },
+    { href: '/admin/analytics', label: 'Analytics' }, // Added Analytics link
   ];
 
   return (
-    <nav
-      className={cn("flex items-center space-x-4 lg:space-x-6", className)}
-      {...props}
-    >
+    <nav className={cn('flex items-center space-x-4 lg:space-x-6', className)} {...props}>
       {routes.map((route) => (
         <Link
           key={route.href}
           href={route.href}
           className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            pathname === route.href ? "text-primary" : "text-muted-foreground"
+            'text-sm font-medium transition-colors hover:text-primary',
+            pathname === route.href ? 'text-primary' : 'text-muted-foreground',
           )}
         >
           {route.label}

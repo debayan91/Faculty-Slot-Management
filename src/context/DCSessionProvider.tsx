@@ -17,11 +17,7 @@ export function DCSessionProvider({ children }: { children: ReactNode }) {
     setDCSessionActive,
   };
 
-  return (
-    <DCSessionContext.Provider value={value}>
-      {children}
-    </DCSessionContext.Provider>
-  );
+  return <DCSessionContext.Provider value={value}>{children}</DCSessionContext.Provider>;
 }
 
 export function useDCSession() {

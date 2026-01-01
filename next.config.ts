@@ -1,4 +1,4 @@
-import type {NextConfig} from 'next';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -23,8 +23,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https'
-        ,
+        protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
         pathname: '/**',
@@ -34,7 +33,7 @@ const nextConfig: NextConfig = {
         hostname: 'd2lk14jtvqry1q.cloudfront.net',
         port: '',
         pathname: '/**',
-      }
+      },
     ],
   },
 };

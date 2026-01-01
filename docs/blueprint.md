@@ -9,7 +9,7 @@
 ## Style Guidelines:
 
 - Dark color scheme.
-- Primary color: Indigo (#4F669B), suggesting calm efficiency. 
+- Primary color: Indigo (#4F669B), suggesting calm efficiency.
 - Background color: Near-black (#12141A). A dark surface allows content to pop.
 - Accent color: Violet (#7B5ABF). Used for highlights.
 - Body and headline font: 'Inter', sans-serif.

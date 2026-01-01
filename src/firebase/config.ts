@@ -4,11 +4,11 @@
 // To change this configuration, update the Google Cloud project
 // associated with this project.
 export const firebaseConfig = {
-  "projectId": "studio-5664654425-1c128",
-  "appId": "1:159989474305:web:4e1fa5b129d829ca1c4c00",
-  "apiKey": "AIzaSyCfnqLOmGvqsHbjFele4gukHnJI_Qm3Zko",
-  "authDomain": "studio-5664654425-1c128.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "159989474305",
-  "storageBucket": "studio-5664654425-1c128.appspot.com"
+  projectId: 'studio-5664654425-1c128',
+  appId: '1:159989474305:web:4e1fa5b129d829ca1c4c00',
+  apiKey: 'AIzaSyCfnqLOmGvqsHbjFele4gukHnJI_Qm3Zko',
+  authDomain: 'studio-5664654425-1c128.firebaseapp.com',
+  measurementId: '',
+  messagingSenderId: '159989474305',
+  storageBucket: 'studio-5664654425-1c128.appspot.com',
 };

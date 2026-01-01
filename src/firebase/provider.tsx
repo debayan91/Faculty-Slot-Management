@@ -23,16 +23,9 @@ type FirebaseProviderProps = {
   firestore: Firestore;
 };
 
-export function FirebaseProvider({
-  children,
-  app,
-  auth,
-  firestore,
-}: FirebaseProviderProps) {
+export function FirebaseProvider({ children, app, auth, firestore }: FirebaseProviderProps) {
   return (
-    <FirebaseContext.Provider value={{ app, auth, firestore }}>
-      {children}
-    </FirebaseContext.Provider>
+    <FirebaseContext.Provider value={{ app, auth, firestore }}>{children}</FirebaseContext.Provider>
   );
 }
 
@@ -44,7 +37,7 @@ export const useFirebaseApp = () => {
     throw new Error('useFirebaseApp must be used within a FirebaseProvider');
   }
   return app;
-}
+};
 
 export const useAuth = () => {
   const { auth } = useFirebase();
@@ -52,7 +45,7 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within a FirebaseProvider');
   }
   return auth;
-}
+};
 
 export const useFirestore = () => {
   const { firestore } = useFirebase();
@@ -60,4 +53,4 @@ export const useFirestore = () => {
     throw new Error('useFirestore must be used within a FirebaseProvider');
   }
   return firestore;
-}
+};

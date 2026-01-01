@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -19,11 +18,11 @@ export function AdminToggler() {
 
     if (isChecked) {
       // If we are not already in an admin page, save the current path
-      if (!pathname.startsWith("/admin")) {
+      if (!pathname.startsWith('/admin')) {
         setPreviousPath(pathname);
       }
       // Redirect to the password authentication page
-      router.push("/admin/auth");
+      router.push('/admin/auth');
     } else {
       // Return to the page the user was on before entering admin mode.
       router.push(previousPath);
@@ -31,15 +30,15 @@ export function AdminToggler() {
   };
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className='flex items-center space-x-2'>
       <Switch
-        id="admin-mode"
+        id='admin-mode'
         // The switch is checked if the user is in admin mode.
-        checked={isAdmin} 
+        checked={isAdmin}
         onCheckedChange={handleToggle}
-        aria-label="Admin Mode Toggle"
+        aria-label='Admin Mode Toggle'
       />
-      <Label htmlFor="admin-mode">Admin Mode</Label>
+      <Label htmlFor='admin-mode'>Admin Mode</Label>
     </div>
   );
 }

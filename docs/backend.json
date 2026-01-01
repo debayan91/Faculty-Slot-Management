@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Faculty": {
@@ -116,9 +115,9 @@
           "description": "The authorized email address."
         },
         "addedAt": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Timestamp when the email was added."
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the email was added."
         }
       },
       "required": ["email"]
@@ -141,8 +140,8 @@
       "description": "Stores the fixed schedule templates for each day of the week."
     },
     "/authorized_emails/{docId}": {
-        "schema": { "$ref": "#/entities/AuthorizedEmail" },
-        "description": "A list of email addresses authorized to use the app. The document ID can be the email address itself for easy lookup."
+      "schema": { "$ref": "#/entities/AuthorizedEmail" },
+      "description": "A list of email addresses authorized to use the app. The document ID can be the email address itself for easy lookup."
     }
   }
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { User } from 'firebase/auth';
@@ -24,7 +23,7 @@ async function checkAuthorization(db: Firestore, email: string): Promise<boolean
     const docSnap = await getDoc(authEmailRef);
     return docSnap.exists();
   } catch (error) {
-    console.error("Error checking authorization:", error);
+    console.error('Error checking authorization:', error);
     return false;
   }
 }
@@ -46,8 +45,8 @@ export function useUser() {
     }
 
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      setUserState(prevState => ({ ...prevState, loading: true, isAuthorized: null }));
-      
+      setUserState((prevState) => ({ ...prevState, loading: true, isAuthorized: null }));
+
       if (user && user.email) {
         // User is signed in. Check their authorization status first.
         const isAuthorized = await checkAuthorization(firestore, user.email);
@@ -58,7 +57,7 @@ export function useUser() {
             const facultyProfile = await getFacultyProfile(firestore, user.uid);
             setUserState({ user, faculty: facultyProfile, isAuthorized: true, loading: false });
           } catch (error) {
-            console.error("[useUser] Failed to fetch faculty profile:", error);
+            console.error('[useUser] Failed to fetch faculty profile:', error);
             // Still authorized, but profile fetch failed.
             setUserState({ user, faculty: null, isAuthorized: true, loading: false });
           }

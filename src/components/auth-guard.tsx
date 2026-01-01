@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -26,10 +25,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
     // If user is an admin, they have access to admin routes, bypassing other checks.
     if (isAdmin && isAdminRoute) {
-        // Exception: if an admin logs out, they should be redirected from admin pages
-        if (!user) {
-            router.push('/');
-        }
+      // Exception: if an admin logs out, they should be redirected from admin pages
+      if (!user) {
+        router.push('/');
+      }
       return;
     }
 
@@ -58,34 +57,32 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       }
       return;
     }
-
   }, [user, loading, isAuthorized, router, pathname, isAdmin]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className='flex items-center justify-center h-screen'>
+        <Loader2 className='h-12 w-12 animate-spin text-primary' />
       </div>
     );
   }
-  
+
   // This logic prevents content "flickering" while redirects are in flight.
   const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
   const isAdminRoute = pathname.startsWith('/admin');
-  
+
   if (isAdmin && isAdminRoute) {
     return <>{children}</>;
   }
-  
+
   if (!user && !isPublicRoute) {
     // If not logged in and trying to access protected route, show nothing while redirecting.
     return null;
   }
   if (user && !isAuthorized && pathname !== '/unauthorized') {
-     // If logged in, not authorized, and not on the unauthorized page, show nothing.
+    // If logged in, not authorized, and not on the unauthorized page, show nothing.
     return null;
   }
-
 
   return <>{children}</>;
 }
